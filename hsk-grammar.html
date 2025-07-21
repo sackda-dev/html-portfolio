@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinese Grammar Flashcards</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex flex-col items-center p-4">
+    <div id="root" class="w-full flex flex-col items-center">
+        <!-- React app will be mounted here -->
+    </div>
+
+    <!-- React and ReactDOM CDNs -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX transformation in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Expose Firebase functions globally for the Babel-transformed script
+        window.firebase = {
+            initializeApp,
+            getAuth,
+            signInAnonymously,
+            signInWithCustomToken,
+            onAuthStateChanged,
+            getFirestore,
+            doc,
+            setDoc,
+            getDoc
+        };
+    </script>
+
+    <script type="text/babel">
+        // Global Firebase configuration and app ID (provided by the environment)
+        // These variables are injected into the Canvas environment.
+        // If running locally without Canvas, they will be undefined, so provide fallbacks.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // HSK Grammar Data (HSK 1-4)
+        const grammarData = {
+            'hsk1': [
+                { id: 'hsk1-shi', pattern: '是...', explanation: 'Used to connect nouns or pronouns, indicating identity, classification, or judgment. It can be negated with 不 (bù).', examples: [
+                    { chinese: '我是学生。', pinyin: 'Wǒ shì xuéshēng.', english: 'I am a student.' },
+                    { chinese: '他不是老师。', pinyin: 'Tā bú shì lǎoshī.', english: 'He is not a teacher.' },
+                    { chinese: '这是我的书。', pinyin: 'Zhè shì wǒ de shū.', english: 'This is my book.' }
+                ]},
+                { id: 'hsk1-bu', pattern: '不 + Verb/Adjective', explanation: 'Used to negate verbs or adjectives, indicating "not" or "no".', examples: [
+                    { chinese: '我不好。', pinyin: 'Wǒ bù hǎo.', english: 'I am not good.' },
+                    { chinese: '他不去学校。', pinyin: 'Tā bú qù xuéxiào.', english: 'He doesn\'t go to school.' },
+                    { chinese: '我不喜欢咖啡。', pinyin: 'Wǒ bù xǐhuān kāfēi.', english: 'I don\'t like coffee.' }
+                ]},
+                { id: 'hsk1-ma', pattern: '...吗?', explanation: 'A question particle placed at the end of a declarative sentence to turn it into a yes/no question.', examples: [
+                    { chinese: '你是中国人吗？', pinyin: 'Nǐ shì Zhōngguó rén ma?', english: 'Are you Chinese?' },
+                    { chinese: '她喜欢吃米饭吗？', pinyin: 'Tā xǐhuān chī mǐfàn ma?', english: 'Does she like to eat rice?' }
+                ]},
+                { id: 'hsk1-ne', pattern: '...呢?', explanation: 'A question particle used to ask "How about...?" or to inquire about the location of someone/something already mentioned.', examples: [
+                    { chinese: '我很好，你呢？', pinyin: 'Wǒ hěn hǎo, nǐ ne?', english: 'I\'m fine, how about you?' },
+                    { chinese: '我的书在这里，你的呢？', pinyin: 'Wǒ de shū zài zhèlǐ, nǐ de ne?', english: 'My book is here, how about yours?' }
+                ]},
+                { id: 'hsk1-hen', pattern: '很 + Adjective', explanation: 'Used before adjectives as a common way to express a degree, often translated as "very" but can also just soften the adjective. It\'s often used even when not emphasizing "very".', examples: [
+                    { chinese: '她很高兴。', pinyin: 'Tā hěn gāoxìng.', english: 'She is very happy.' },
+                    { chinese: '这个苹果很好吃。', pinyin: 'Zhège píngguǒ hěn hǎochī.', english: 'This apple is delicious.' }
+                ]},
+                { id: 'hsk1-you', pattern: '有', explanation: 'To have; there is/are. Negated with 没有 (méiyǒu).', examples: [
+                    { chinese: '我有一个妹妹。', pinyin: 'Wǒ yǒu yī gè mèimei.', english: 'I have a younger sister.' },
+                    { chinese: '桌子上没有水。', pinyin: 'Zhuōzi shàng méiyǒu shuǐ.', english: 'There is no water on the table.' }
+                ]},
+                { id: 'hsk1-zai', pattern: '在 + Place', explanation: 'Indicates location or presence at a place. The structure is Subject + 在 + Place.', examples: [
+                    { chinese: '他在学校。', pinyin: 'Tā zài xuéxiào.', english: 'He is at school.' },
+                    { chinese: '我的朋友在北京。', pinyin: 'Wǒ de péngyou zài Běijīng.', english: 'My friend is in Beijing.' }
+                ]},
+                { id: 'hsk1-qu-lai', pattern: '去 / 来', explanation: 'Directional verbs. 去 (qù) means "to go" (away from the speaker), 来 (lái) means "to come" (towards the speaker).', examples: [
+                    { chinese: '你去哪儿？', pinyin: 'Nǐ qù nǎr?', english: 'Where are you going?' },
+                    { chinese: '他来我家。', pinyin: 'Tā lái wǒ jiā.', english: 'He is coming to my home.' }
+                ]},
+                { id: 'hsk1-de', pattern: '的', explanation: 'Possessive particle. Used after a pronoun or noun to indicate possession or a descriptive relationship.', examples: [
+                    { chinese: '这是我的书。', pinyin: 'Zhè shì wǒ de shū.', english: 'This is my book.' },
+                    { chinese: '她是一个漂亮的女孩。', pinyin: 'Tā shì yī gè piàoliang de nǚhái.', english: 'She is a beautiful girl.' }
+                ]},
+                { id: 'hsk1-he', pattern: '和', explanation: 'Conjunction "and". Used to connect nouns, pronouns, or phrases. It cannot connect verbs or clauses directly.', examples: [
+                    { chinese: '我和他都是学生。', pinyin: 'Wǒ hé tā dōu shì xuéshēng.', english: 'Both he and I are students.' },
+                    { chinese: '我喜欢吃米饭和菜。', pinyin: 'Wǒ xǐhuān chī mǐfàn hé cài.', english: 'I like to eat rice and dishes.' }
+                ]},
+                { id: 'hsk1-duoshao-ji', pattern: '多少 / 几', explanation: 'Both ask "how many/much". 几 (jǐ) is used for small numbers (usually 1-10) or when the number is expected to be small. 多少 (duōshao) is used for larger, unknown quantities.', examples: [
+                    { chinese: '你家有几口人？', pinyin: 'Nǐ jiā yǒu jǐ kǒu rén?', english: 'How many people are in your family?' },
+                    { chinese: '这个学校有多少学生？', pinyin: 'Zhège xuéxiào yǒu duōshao xuéshēng?', english: 'How many students are in this school?' }
+                ]},
+                { id: 'hsk1-zenme', pattern: '怎么?', explanation: 'Asks "how?" or "why?". Used to inquire about manner, method, or reason.', examples: [
+                    { chinese: '这个字怎么写？', pinyin: 'Zhège zì zěnme xiě？', english: 'How do you write this character?' },
+                    { chinese: '你怎么了？', pinyin: 'Nǐ zěnme le？', english: 'What\'s wrong with you?' }
+                ]},
+                { id: 'hsk1-shenme', pattern: '什么?', explanation: 'Asks "what?". Used to inquire about things, actions, or attributes.', examples: [
+                    { chinese: '你叫什么名字？', pinyin: 'Nǐ jiào shénme míngzi？', english: 'What is your name?' },
+                    { chinese: '这是什么？', pinyin: 'Zhè shì shénme？', english: 'What is this?' }
+                ]},
+                { id: 'hsk1-shei', pattern: '谁?', explanation: 'Asks "who?". Used to inquire about a person.', examples: [
+                    { chinese: '他是谁？', pinyin: 'Tā shì shéi？', english: 'Who is he?' },
+                    { chinese: '谁喜欢喝茶？', pinyin: 'Shéi xǐhuān hē chá？', english: 'Who likes to drink tea?' }
+                ]},
+                { id: 'hsk1-nar', pattern: '哪儿?', explanation: 'Asks "where?". Used to inquire about a location.', examples: [
+                    { chinese: '你去哪儿？', pinyin: 'Nǐ qù nǎr？', english: 'Where are you going?' },
+                    { chinese: '你的家在哪儿？', pinyin: 'Nǐ de jiā zài nǎr？', english: 'Where is your home?' }
+                ]},
+                { id: 'hsk1-taile', pattern: '太...了', explanation: 'Indicates an excessive degree, often translated as "too...". Can be positive or negative depending on context.', examples: [
+                    { chinese: '这个太大了。', pinyin: 'Zhège tài dà le.', english: 'This is too big.' },
+                    { chinese: '今天太热了。', pinyin: 'Jīntiān tài rè le.', english: 'It\'s too hot today.' }
+                ]},
+                { id: 'hsk1-le', pattern: '了', explanation: 'Completion particle. Indicates the completion or realization of an action or a change of state.', examples: [
+                    { chinese: '我吃饭了。', pinyin: 'Wǒ chī fàn le.', english: 'I have eaten.' },
+                    { chinese: '下雨了。', pinyin: 'Xià yǔ le.', english: 'It\'s raining now (or it started raining).' }
+                ]},
+            ],
+            'hsk2': [
+                { id: 'hsk2-hui', pattern: '会', explanation: 'Can (ability learned through study/training); will (future tense or likelihood).', examples: [
+                    { chinese: '我会说汉语。', pinyin: 'Wǒ huì shuō Hànyǔ.', english: 'I can speak Chinese.' },
+                    { chinese: '明天会下雨。', pinyin: 'Míngtiān huì xià yǔ.', english: 'It will rain tomorrow.' }
+                ]},
+                { id: 'hsk2-xiang', pattern: '想', explanation: 'To want; to think; to miss (someone).', examples: [
+                    { chinese: '我想去中国。', pinyin: 'Wǒ xiǎng qù Zhōngguó.', english: 'I want to go to China.' },
+                    { chinese: '我想你。', pinyin: 'Wǒ xiǎng nǐ.', english: 'I miss you.' }
+                ]},
+                { id: 'hsk2-yao', pattern: '要', explanation: 'To want; to be going to; must. Stronger desire or intention than 想 (xiǎng).', examples: [
+                    { chinese: '我要买一个新手机。', pinyin: 'Wǒ yào mǎi yī gè xīn shǒujī.', english: 'I want to buy a new phone.' },
+                    { chinese: '他要来我家。', pinyin: 'Tā yào lái wǒ jiā.', english: 'He is going to come to my house.' }
+                ]},
+                { id: 'hsk2-neng', pattern: '能', explanation: 'Can (physical ability or possibility).', examples: [
+                    { chinese: '我能看见你。', pinyin: 'Wǒ néng kànjiàn nǐ.', english: 'I can see you.' },
+                    { chinese: '你现在能来吗？', pinyin: 'Nǐ xiànzài néng lái ma?', english: 'Can you come now?' }
+                ]},
+                { id: 'hsk2-keyi', pattern: '可以', explanation: 'Can (permission).', examples: [
+                    { chinese: '我可以用你的电脑吗？', pinyin: 'Wǒ kěyǐ yòng nǐ de diànnǎo ma?', english: 'May I use your computer?' },
+                    { chinese: '你现在可以走了。', pinyin: 'Nǐ xiànzài kěyǐ zǒu le.', english: 'You can leave now.' }
+                ]},
+                { id: 'hsk2-zai-ne', pattern: '在...呢', explanation: 'Indicates an action is ongoing or in progress.', examples: [
+                    { chinese: '他正在睡觉呢。', pinyin: 'Tā zhèngzài shuìjiào ne.', english: 'He is sleeping.' },
+                    { chinese: '我吃饭呢。', pinyin: 'Wǒ chīfàn ne.', english: 'I am eating.' }
+                ]},
+                { id: 'hsk2-guo', pattern: '过', explanation: 'Experiential particle. Indicates that an action has been experienced at some point in the past.', examples: [
+                    { chinese: '我吃过中国菜。', pinyin: 'Wǒ chī guo Zhōngguó cài.', english: 'I have eaten Chinese food.' },
+                    { chinese: '他去过北京。', pinyin: 'Tā qù guo Běijīng.', english: 'He has been to Beijing.' }
+                ]},
+                { id: 'hsk2-yidianr', pattern: '一点儿', explanation: 'A little bit. Used after adjectives to indicate a slight degree, or after verbs to indicate a small amount of action.', examples: [
+                    { chinese: '我有点儿累。', pinyin: 'Wǒ yǒudiǎnr lèi.', english: 'I\'m a little tired.' },
+                    { chinese: '请给我一点儿水。', pinyin: 'Qǐng gěi wǒ yīdiǎnr shuǐ.', english: 'Please give me a little water.' }
+                ]},
+                { id: 'hsk2-bi', pattern: 'A 比 B + Adjective', explanation: 'Comparison structure, meaning "A is more [adjective] than B".', examples: [
+                    { chinese: '他比我高。', pinyin: 'Tā bǐ wǒ gāo.', english: 'He is taller than me.' },
+                    { chinese: '今天比昨天热。', pinyin: 'Jīntiān bǐ zuótiān rè.', english: 'Today is hotter than yesterday.' }
+                ]},
+                { id: 'hsk2-de-complement', pattern: 'Verb + 得 + Adjective/Adverb', explanation: 'Structural particle. Used after a verb to describe the manner or result of the action.', examples: [
+                    { chinese: '他说汉语说得很好。', pinyin: 'Tā shuō Hànyǔ shuō de hěn hǎo.', english: 'He speaks Chinese very well.' },
+                    { chinese: '她跑得很快。', pinyin: 'Tā pǎo de hěn kuài.', english: 'She runs very fast.' }
+                ]},
+                { id: 'hsk2-zhe', pattern: '着', explanation: 'Continuous state. Indicates a continuous state or action, similar to "-ing" in English.', examples: [
+                    { chinese: '门开着。', pinyin: 'Mén kāizhe.', english: 'The door is open.' },
+                    { chinese: '他穿着一件红衣服。', pinyin: 'Tā chuānzhe yī jiàn hóng yīfu.', english: 'He is wearing a red shirt.' }
+                ]},
+                { id: 'hsk2-gen-yiqi', pattern: '跟...一起', explanation: 'Together with... Used to indicate that an action is done with someone.', examples: [
+                    { chinese: '我跟朋友一起去商店。', pinyin: 'Wǒ gēn péngyou yīqǐ qù shāngdiàn.', english: 'I go to the store with my friend.' },
+                    { chinese: '我们一起学习汉语。', pinyin: 'Wǒmen yīqǐ xuéxí Hànyǔ.', english: 'We study Chinese together.' }
+                ]},
+                { id: 'hsk2-cong-dao', pattern: '从...到...', explanation: 'From...to... Used to indicate a range in time or space.', examples: [
+                    { chinese: '从家到学校很远。', pinyin: 'Cóng jiā dào xuéxiào hěn yuǎn.', english: 'It\'s far from home to school.' },
+                    { chinese: '我从早上八点工作到晚上五点。', pinyin: 'Wǒ cóng zǎoshang bā diǎn gōngzuò dào wǎnshang wǔ diǎn.', english: 'I work from 8 AM to 5 PM.' }
+                ]},
+                { id: 'hsk2-li-yuan-jin', pattern: '离...远/近', explanation: 'Far/near from... Used to describe distance between two places.', examples: [
+                    { chinese: '我家离学校很近。', pinyin: 'Wǒ jiā lí xuéxiào hěn jìn.', english: 'My home is very close to the school.' },
+                    { chinese: '火车站离这里远吗？', pinyin: 'Huǒchēzhàn lí zhèlǐ yuǎn ma?', english: 'Is the train station far from here?' }
+                ]},
+                { id: 'hsk2-suiran-danshi', pattern: '虽然...但是...', explanation: 'Although...but... Used to express a concession or contrast.', examples: [
+                    { chinese: '虽然下雨了，但是我们还是要去。', pinyin: 'Suīrán xià yǔ le, dànshì wǒmen háishì yào qù.', english: 'Although it\'s raining, we still want to go.' },
+                    { chinese: '虽然他很忙，但是他很高兴。', pinyin: 'Suīrán tā hěn máng, dànshì tā hěn gāoxìng.', english: 'Although he is very busy, he is very happy.' }
+                ]},
+                { id: 'hsk2-yinwei-suoyi', pattern: '因为...所以...', explanation: 'Because...therefore... Used to express cause and effect.', examples: [
+                    { chinese: '因为下雨，所以我没去。', pinyin: 'Yīnwèi xià yǔ, suǒyǐ wǒ méi qù.', english: 'Because it rained, I didn\'t go.' },
+                    { chinese: '因为他生病了，所以不能来。', pinyin: 'Yīnwèi tā shēngbìng le, suǒyǐ bù néng lái.', english: 'Because he is sick, he cannot come.' }
+                ]},
+                { id: 'hsk2-huozhe-haishi', pattern: '或者 / 还是', explanation: 'Both mean "or". 或者 (huòzhě) is used in statements, while 还是 (háishì) is used in questions.', examples: [
+                    { chinese: '你喜欢喝咖啡或者茶？', pinyin: 'Nǐ xǐhuān hē kāfēi huòzhě chá？', english: 'Do you like to drink coffee or tea?' },
+                    { chinese: '我们今天去商店还是去医院？', pinyin: 'Wǒmen jīntiān qù shāngdiàn háishì qù yīyuàn？', english: 'Are we going to the store or the hospital today?' }
+                ]},
+            ],
+            'hsk3': [
+                { id: 'hsk3-ba', pattern: '把 (bǎ) structure', explanation: 'Used to indicate that the object of the verb is disposed of or affected by the action. Structure: Subject + 把 + Object + Verb + Other elements.', examples: [
+                    { chinese: '我把书放在桌子上。', pinyin: 'Wǒ bǎ shū fàng zài zhuōzi shàng.', english: 'I put the book on the table.' },
+                    { chinese: '请把门打开。', pinyin: 'Qǐng bǎ mén dǎkāi.', english: 'Please open the door.' }
+                ]},
+                { id: 'hsk3-bei', pattern: '被 (bèi) structure', explanation: 'Used to indicate a passive voice, meaning the subject is acted upon. Structure: Object + 被 + Agent (optional) + Verb + Other elements.', examples: [
+                    { chinese: '我的手机被他拿走了。', pinyin: 'Wǒ de shǒujī bèi tā ná zǒu le.', english: 'My phone was taken by him.' },
+                    { chinese: '花被风吹掉了。', pinyin: 'Huā bèi fēng chuī diào le.', english: 'The flower was blown off by the wind.' }
+                ]},
+                { id: 'hsk3-qilai', pattern: 'Verb + 起来', explanation: 'Indicates the beginning of an action or an upward movement. Can also indicate an impression or evaluation.', examples: [
+                    { chinese: '他笑起来了。', pinyin: 'Tā xiào qǐlái le.', english: 'He started laughing.' },
+                    { chinese: '这件衣服看起来很漂亮。', pinyin: 'Zhè jiàn yīfu kàn qǐlái hěn piàoliang.', english: 'This dress looks very beautiful.' }
+                ]},
+                { id: 'hsk3-xiaqu', pattern: 'Verb + 下去', explanation: 'Indicates the continuation of an action or a downward movement.', examples: [
+                    { chinese: '请你继续说下去。', pinyin: 'Qǐng nǐ jìxù shuō xiàqù.', english: 'Please continue speaking.' },
+                    { chinese: '雨一直下下去。', pinyin: 'Yǔ yīzhí xià xiàqù.', english: 'The rain kept falling.' }
+                ]},
+                { id: 'hsk3-resultative', pattern: 'Verb + Resultative Complement', explanation: 'Resultative complements describe the result of an action. Common ones include 完 (wán - finished), 好 (hǎo - done well), 懂 (dǒng - understood), 见 (jiàn - seen).', examples: [
+                    { chinese: '我吃完饭了。', pinyin: 'Wǒ chī wán fàn le.', english: 'I finished eating.' },
+                    { chinese: '你看懂这本书了吗？', pinyin: 'Nǐ kàn dǒng zhè běn shū le ma?', english: 'Did you understand this book after reading it?' }
+                ]},
+                { id: 'hsk3-chulai', pattern: 'Verb + 出来', explanation: 'Indicates emergence, separation, or recognition/discernment.', examples: [
+                    { chinese: '他从房间里走出来了。', pinyin: 'Tā cóng fángjiān lǐ zǒu chūlái le.', english: 'He walked out of the room.' },
+                    { chinese: '我听出来他的声音了。', pinyin: 'Wǒ tīng chūlái tā de shēngyīn le.', english: 'I recognized his voice (by listening).' }
+                ]},
+                { id: 'hsk3-direction', pattern: 'Directional Complements (Simple)', explanation: 'Used after a verb to indicate the direction of the action (e.g., 进去 - go in, 出来 - come out, 上去 - go up, 下来 - come down).', examples: [
+                    { chinese: '请进房间来。', pinyin: 'Qǐng jìn fángjiān lái.', english: 'Please come into the room.' },
+                    { chinese: '他跑上去了。', pinyin: 'Tā pǎo shàngqù le.', english: 'He ran up.' }
+                ]},
+                { id: 'hsk3-yuelaiyue', pattern: '越来越...', explanation: 'More and more... Indicates a progressive change.', examples: [
+                    { chinese: '他越来越喜欢汉语了。', pinyin: 'Tā yuè lái yuè xǐhuān Hànyǔ le.', english: 'He likes Chinese more and more.' },
+                    { chinese: '天气越来越冷了。', pinyin: 'Tiānqì yuè lái yuè lěng le.', english: 'The weather is getting colder and colder.' }
+                ]},
+                { id: 'hsk3-chule-yiwai', pattern: '除了...以外, 都/也...', explanation: 'Besides...all/also... Used to indicate an exception or inclusion.', examples: [
+                    { chinese: '除了他以外，我们都来了。', pinyin: 'Chúle tā yǐwài, wǒmen dōu lái le.', english: 'Besides him, all of us came.' },
+                    { chinese: '除了英语，他还会说汉语。', pinyin: 'Chúle Yīngyǔ, tā hái huì shuō Hànyǔ.', english: 'Besides English, he can also speak Chinese.' }
+                ]},
+                { id: 'hsk3-bujin-erqie', pattern: '不仅...而且...', explanation: 'Not only...but also... Used to connect two related clauses, emphasizing the second one.', examples: [
+                    { chinese: '他不仅会说汉语，而且说得很好。', pinyin: 'Tā bùjǐn huì shuō Hànyǔ, érqiě shuō de hěn hǎo.', english: 'Not only can he speak Chinese, but he also speaks it very well.' },
+                    { chinese: '这个地方不仅漂亮，而且很安静。', pinyin: 'Zhège dìfang bùjǐn piàoliang, érqiě hěn ānjìng.', english: 'This place is not only beautiful, but also very quiet.' }
+                ]},
+                { id: 'hsk3-zhiyao-jiu', pattern: '只要...就...', explanation: 'As long as...then... Indicates a condition that guarantees a result.', examples: [
+                    { chinese: '只要努力学习，就能考好。', pinyin: 'Zhǐyào nǔlì xuéxí, jiù néng kǎo hǎo.', english: 'As long as you study hard, you can do well on the exam.' },
+                    { chinese: '只要有时间，我就会去旅游。', pinyin: 'Zhǐyào yǒu shíjiān, wǒ jiù huì qù lǚyóu.', english: 'As long as I have time, I will go travel.' }
+                ]},
+                { id: 'hsk3-zhiyou-cai', pattern: '只有...才...', explanation: 'Only if...then... Indicates a necessary condition for a result to occur.', examples: [
+                    { chinese: '只有努力，才能成功。', pinyin: 'Zhǐyǒu nǔlì, cái néng chénggōng.', english: 'Only through effort can one succeed.' },
+                    { chinese: '只有你告诉我，我才能知道。', pinyin: 'Zhǐyǒu nǐ gàosù wǒ, wǒ cái néng zhīdào.', english: 'Only if you tell me, will I know.' }
+                ]},
+                { id: 'hsk3-wulun-dou-ye', pattern: '无论...都/也...', explanation: 'No matter (what/how/who)...all/also... Indicates that a result remains the same regardless of the condition.', examples: [
+                    { chinese: '无论天气怎么样，我都要去。', pinyin: 'Wúlùn tiānqì zěnmeyàng, wǒ dōu yào qù.', english: 'No matter what the weather is like, I will go.' },
+                    { chinese: '无论多忙，他也会给我打电话。', pinyin: 'Wúlùn duō máng, tā yě huì gěi wǒ dǎ diànhuà.', english: 'No matter how busy he is, he will also call me.' }
+                ]},
+                { id: 'hsk3-shide', pattern: '是...的', explanation: 'Emphatic structure. Used to emphasize the time, place, manner, or agent of a past action.', examples: [
+                    { chinese: '我是昨天来的。', pinyin: 'Wǒ shì zuótiān lái de.', english: 'I came yesterday (emphasizing "yesterday").' },
+                    { chinese: '他是在北京学的汉语。', pinyin: 'Tā shì zài Běijīng xué de Hànyǔ.', english: 'He learned Chinese in Beijing (emphasizing "in Beijing").' }
+                ]},
+                { id: 'hsk3-lian-dou-ye', pattern: '连...都/也...', explanation: 'Even... Used to emphasize an extreme case, meaning "even [something extreme] is true, so other things are also true".', examples: [
+                    { chinese: '他连饭都没吃。', pinyin: 'Tā lián fàn dōu méi chī.', english: 'He didn\'t even eat food.' },
+                    { chinese: '这么简单的问题，连孩子也知道。', pinyin: 'Zhème jiǎndān de wèntí, lián háizi yě zhīdào.', english: 'Even a child knows such a simple question.' }
+                ]},
+                { id: 'hsk3-dui-ganxingqu', pattern: '对...感兴趣', explanation: 'Interested in... Used to express interest in something.', examples: [
+                    { chinese: '我对中国文化很感兴趣。', pinyin: 'Wǒ duì Zhōngguó wénhuà hěn gǎnxìngqù.', english: 'I am very interested in Chinese culture.' },
+                    { chinese: '她对学汉语不感兴趣。', pinyin: 'Tā duì xué Hànyǔ bù gǎnxìngqù.', english: 'She is not interested in learning Chinese.' }
+                ]},
+                { id: 'hsk3-guanyu', pattern: '关于', explanation: 'About; concerning. Used before a noun or pronoun to introduce the topic.', examples: [
+                    { chinese: '这本书是关于历史的。', pinyin: 'Zhè běn shū shì guānyú lìshǐ de.', english: 'This book is about history.' },
+                    { chinese: '我们谈论了关于未来的计划。', pinyin: 'Wǒmen tánlùn le guānyú wèilái de jìhuà.', english: 'We discussed plans about the future.' }
+                ]},
+            ],
+            'hsk4': [
+                { id: 'hsk4-guolai-guoqu', pattern: 'Verb + 过来 / 过去 (Figurative)', explanation: 'Directional complements used figuratively to indicate a change of state, recovery, or ability to manage. 过来 (guòlái) often means "to come around, to recover", 过去 (guòqù) often means "to go over, to pass".', examples: [
+                    { chinese: '他终于醒过来了。', pinyin: 'Tā zhōngyú xǐng guòlái le.', english: 'He finally woke up (came to).' },
+                    { chinese: '这个问题我还没想过去。', pinyin: 'Zhège wèntí wǒ hái méi xiǎng guòqù.', english: 'I haven\'t thought this problem through yet.' }
+                ]},
+                { id: 'hsk4-diao', pattern: 'Verb + 掉', explanation: 'Indicates removal, completion, or getting rid of something.', examples: [
+                    { chinese: '他把旧衣服扔掉了。', pinyin: 'Tā bǎ jiù yīfu rēng diào le.', english: 'He threw away the old clothes.' },
+                    { chinese: '我的手机丢掉了。', pinyin: 'Wǒ de shǒujī diū diào le.', english: 'My phone is lost.' }
+                ]},
+                { id: 'hsk4-zhu', pattern: 'Verb + 住', explanation: 'Indicates firmness, stability, or successful stopping/holding.', examples: [
+                    { chinese: '请你站住！', pinyin: 'Qǐng nǐ zhànzhù!', english: 'Please stop! (Stand still!)' },
+                    { chinese: '我记住了他的名字。', pinyin: 'Wǒ jì zhù le tā de míngzi.', english: 'I remembered his name.' }
+                ]},
+                { id: 'hsk4-qilai-evaluation', pattern: 'Verb + 起来 (Evaluation)', explanation: 'Used to give an impression or evaluation based on perception. Similar to "it seems that..." or "it looks/sounds/feels...".', examples: [
+                    { chinese: '这首歌听起来很好听。', pinyin: 'Zhè shǒu gē tīng qǐlái hěn hǎotīng.', english: 'This song sounds very good.' },
+                    { chinese: '他看起来很累。', pinyin: 'Tā kàn qǐlái hěn lèi.', english: 'He looks very tired.' }
+                ]},
+                { id: 'hsk4-de-bu-potential', pattern: 'Verb + 得/不 + Complement (Potential)', explanation: 'Indicates whether an action is possible or impossible to achieve a certain result. 得 (de) for possible, 不 (bù) for impossible.', examples: [
+                    { chinese: '这个字我写得出来。', pinyin: 'Zhège zì wǒ xiě de chūlái.', english: 'I can write this character (successfully).' },
+                    { chinese: '饭太多了，我吃不完。', pinyin: 'Fàn tài duō le, wǒ chī bu wán.', english: 'There\'s too much food, I can\'t finish eating it.' }
+                ]},
+                { id: 'hsk4-bian', pattern: 'Verb + 遍', explanation: 'Indicates the completion of an action from beginning to end, covering all parts or instances.', examples: [
+                    { chinese: '我把这本书看了一遍。', pinyin: 'Wǒ bǎ zhè běn shū kàn le yī biàn.', english: 'I read this book once (from beginning to end).' },
+                    { chinese: '请你再说一遍。', pinyin: 'Qǐng nǐ zài shuō yī biàn.', english: 'Please say it again (the whole thing).' }
+                ]},
+                { id: 'hsk4-duibulaisuo', pattern: 'A 对 B 来说', explanation: 'As far as A is concerned for B; for A, from B\'s perspective. Used to introduce a point of view.', examples: [
+                    { chinese: '对我来说，学汉语很有趣。', pinyin: 'Duì wǒ lái shuō, xué Hànyǔ hěn yǒuqù.', english: 'For me, learning Chinese is very interesting.' },
+                    { chinese: '对学生来说，考试很重要。', pinyin: 'Duì xuéshēng lái shuō, kǎoshì hěn zhòngyào.', english: 'For students, exams are very important.' }
+                ]},
+                { id: 'hsk4-jiran-jiu', pattern: '既然...就...', explanation: 'Since...then... Used to indicate that since a certain situation exists, a certain action or result should follow.', examples: [
+                    { chinese: '既然你来了，就多玩一会儿吧。', pinyin: 'Jìrán nǐ lái le, jiù duō wán yīhuìr ba.', english: 'Since you\'ve come, stay and play for a while longer.' },
+                    { chinese: '既然决定了，就不要后悔。', pinyin: 'Jìrán juédìng le, jiù bùyào hòuhuǐ.', english: 'Since you\'ve decided, don\'t regret it.' }
+                ]},
+                { id: 'hsk4-fouze', pattern: '否则', explanation: 'Otherwise; if not. Used to introduce a consequence if the preceding condition is not met.', examples: [
+                    { chinese: '你必须努力学习，否则会挂科。', pinyin: 'Nǐ bìxū nǔlì xuéxí, fǒuzé huì guàkē.', english: 'You must study hard, otherwise you will fail the course.' },
+                    { chinese: '快点走，否则会迟到。', pinyin: 'Kuài diǎn zǒu, fǒuzé huì chídào.', english: 'Walk faster, otherwise you\'ll be late.' }
+                ]},
+                { id: 'hsk4-tongguo', pattern: '通过', explanation: 'Through; by means of; to pass (a test).', examples: [
+                    { chinese: '通过努力，他成功了。', pinyin: 'Tōngguò nǔlì, tā chénggōng le.', english: 'Through effort, he succeeded.' },
+                    { chinese: '他通过了考试。', pinyin: 'Tā tōngguò le kǎoshì.', english: 'He passed the exam.' }
+                ]},
+                { id: 'hsk4-youyu', pattern: '由于', explanation: 'Due to; because of. Used to state the reason or cause for something, often followed by a consequence.', examples: [
+                    { chinese: '由于下雨，比赛取消了。', pinyin: 'Yóuyú xià yǔ, bǐsài qǔxiāo le.', english: 'Due to the rain, the match was canceled.' },
+                    { chinese: '由于工作忙，他没有时间休息。', pinyin: 'Yóuyú gōngzuò máng, tā méiyǒu shíjiān xiūxi.', english: 'Because he is busy with work, he has no time to rest.' }
+                ]},
+                { id: 'hsk4-conger', pattern: '从而', explanation: 'Thus; thereby. Used to introduce a result or consequence of the preceding action or situation.', examples: [
+                    { chinese: '他努力学习，从而取得了进步。', pinyin: 'Tā nǔlì xuéxí, cóng\'ér qǔdé le jìnbù.', english: 'He studied hard, thereby making progress.' },
+                    { chinese: '增加收入，从而提高生活水平。', pinyin: 'Zēngjiā shōurù, cóng\'ér tígāo shēnghuó shuǐpíng.', english: 'Increase income, thereby improving living standards.' }
+                ]},
+                { id: 'hsk4-zhiyu', pattern: '至于', explanation: 'As for; as to. Used to introduce another topic or to shift focus.', examples: [
+                    { chinese: '我喜欢旅游，至于去哪儿，还没决定。', pinyin: 'Wǒ xǐhuān lǚyóu, zhìyú qù nǎr, hái méi juédìng.', english: 'I like traveling. As for where to go, I haven\'t decided yet.' },
+                    { chinese: '他已经很努力了，至于结果，就看运气吧。', pinyin: 'Tā yǐjīng hěn nǔlì le, zhìyú jiéguǒ, jiù kàn yùnqì ba.', english: 'He has already worked very hard. As for the result, it depends on luck.' }
+                ]},
+                { id: 'hsk4-yibian', pattern: '以便', explanation: 'So that; in order to. Used to indicate purpose.', examples: [
+                    { chinese: '请把门关上，以便保持安静。', pinyin: 'Qǐng bǎ mén guānshàng, yǐbiàn bǎochí ānjìng.', english: 'Please close the door so that it can stay quiet.' },
+                    { chinese: '我早点起床，以便赶上火车。', pinyin: 'Wǒ zǎodiǎn qǐchuáng, yǐbiàn gǎnshàng huǒchē.', english: 'I got up early in order to catch the train.' }
+                ]},
+                { id: 'hsk4-chufei-fouze', pattern: '除非...否则...', explanation: 'Unless...otherwise... Used to state a condition that must be met, or else a negative consequence will follow.', examples: [
+                    { chinese: '除非你告诉我，否则我不会知道。', pinyin: 'Chúfēi nǐ gàosù wǒ, fǒuzé wǒ bù huì zhīdào.', english: 'Unless you tell me, I won\'t know.' },
+                    { chinese: '除非下雨，否则我们明天去公园。', pinyin: 'Chúfēi xià yǔ, fǒuzé wǒmen míngtiān qù gōngyuán.', english: 'Unless it rains, we will go to the park tomorrow.' }
+                ]},
+                { id: 'hsk4-jiujing', pattern: '究竟', explanation: 'After all; in the end; exactly. Used in questions to get to the bottom of something or to emphasize the question.', examples: [
+                    { chinese: '你究竟想说什么？', pinyin: 'Nǐ jiūjìng xiǎng shuō shénme？', english: 'What exactly do you want to say?' },
+                    { chinese: '这件事究竟是谁做的？', pinyin: 'Zhè jiàn shì jiūjìng shì shéi zuò de？', english: 'Who actually did this?' }
+                ]},
+                { id: 'hsk4-guoran', pattern: '果然', explanation: 'As expected; sure enough. Indicates that something happened as predicted or anticipated.', examples: [
+                    { chinese: '他果然来了。', pinyin: 'Tā guǒrán lái le.', english: 'He came as expected.' },
+                    { chinese: '天气预报说今天有雨，果然下雨了。', pinyin: 'Tiānqì yùbào shuō jīntiān yǒu yǔ, guǒrán xià yǔ le.', english: 'The weather forecast said it would rain today, and sure enough, it rained.' }
+                ]},
+                { id: 'hsk4-shenzhi', pattern: '甚至', explanation: 'Even; so much so that. Used to emphasize an extreme example or consequence.', examples: [
+                    { chinese: '他太忙了，甚至没有时间吃饭。', pinyin: 'Tā tài máng le, shènzhì méiyǒu shíjiān chīfàn.', english: 'He is too busy, he doesn\'t even have time to eat.' },
+                    { chinese: '这个问题很简单，甚至连孩子都知道。', pinyin: 'Zhège wèntí hěn jiǎndān, shènzhì lián háizi dōu zhīdào.', english: 'This question is very simple, even a child knows it.' }
+                ]},
+                { id: 'hsk4-xiande', pattern: '显得', explanation: 'To seem; to appear. Used to describe how something or someone appears to be.', examples: [
+                    { chinese: '他今天显得很高兴。', pinyin: 'Tā jīntiān xiǎnde hěn gāoxìng.', english: 'He seems very happy today.' },
+                    { chinese: '这件衣服显得你很瘦。', pinyin: 'Zhè jiàn yīfu xiǎnde nǐ hěn shòu.', english: 'This dress makes you look thin.' }
+                ]},
+                { id: 'hsk4-xingkui', pattern: '幸亏', explanation: 'Fortunately; luckily. Used to express gratitude for a fortunate outcome.', examples: [
+                    { chinese: '幸亏你提醒我，否则我就忘了。', pinyin: 'Xìngkuī nǐ tíxǐng wǒ, fǒuzé wǒ jiù wàng le.', english: 'Luckily you reminded me, otherwise I would have forgotten.' },
+                    { chinese: '幸亏下雨了，天气才凉快。', pinyin: 'Xìngkuī xià yǔ le, tiānqì cái liángkuai.', english: 'Fortunately it rained, so the weather became cool.' }
+                ]},
+                { id: 'hsk4-bijing', pattern: '毕竟', explanation: 'After all; in the final analysis. Used to emphasize a point or to state the true situation.', examples: [
+                    { chinese: '他毕竟是孩子，你应该原谅他。', pinyin: 'Tā bìjìng shì háizi, nǐ yīnggāi yuánliàng tā.', english: 'He is a child after all, you should forgive him.' },
+                    { chinese: '这件事毕竟是他的错。', pinyin: 'Zhè jiàn shì bìjìng shì tā de cuò.', english: 'This matter is his fault after all.' }
+                ]},
+                { id: 'hsk4-fanzheng', pattern: '反正', explanation: 'Anyway; in any case. Used to indicate that a situation will not change regardless of other factors, or to state a strong opinion.', examples: [
+                    { chinese: '反正我也没事，就陪你去吧。', pinyin: 'Fǎnzhèng wǒ yě méi shì, jiù péi nǐ qù ba.', english: 'Anyway, I have nothing to do, so I\'ll go with you.' },
+                    { chinese: '反正他不会同意的。', pinyin: 'Fǎnzhèng tā bù huì tóngyì de.', english: 'He won\'t agree anyway.' }
+                ]},
+                { id: 'hsk4-jianzhi', pattern: '简直', explanation: 'Simply; at all. Used for emphasis, often indicating exaggeration or strong feeling.', examples: [
+                    { chinese: '这简直是浪费时间。', pinyin: 'Zhè jiǎnzhí shì làngfèi shíjiān.', english: 'This is simply a waste of time.' },
+                    { chinese: '他简直不敢相信。', pinyin: 'Tā jiǎnzhí bù gǎn xiāngxìn.', english: 'He simply couldn\'t believe it.' }
+                ]},
+                { id: 'hsk4-wangwang', pattern: '往往', explanation: 'Often; frequently (usually refers to a general tendency or regular occurrence).', examples: [
+                    { chinese: '他周末往往在家看书。', pinyin: 'Tā zhōumò wǎngwǎng zài jiā kàn shū.', english: 'He often reads books at home on weekends.' },
+                    { chinese: '下雨天，路上往往很堵。', pinyin: 'Xià yǔ tiān, lùshàng wǎngwǎng hěn dǔ.', english: 'On rainy days, the road is often very congested.' }
+                ]},
+                { id: 'hsk4-zhujian', pattern: '逐渐', explanation: 'Gradually; little by little. Indicates a slow and continuous change.', examples: [
+                    { chinese: '天气逐渐变冷了。', pinyin: 'Tiānqì zhújiàn biàn lěng le.', english: 'The weather gradually became cold.' },
+                    { chinese: '他的汉语水平逐渐提高了。', pinyin: 'Tā de Hànyǔ shuǐpíng zhújiàn tígāo le.', english: 'His Chinese level gradually improved.' }
+                ]},
+                { id: 'hsk4-buduan', pattern: '不断', explanation: 'Continuously; incessantly. Emphasizes an action or state that does not stop.', examples: [
+                    { chinese: '他不断地学习新知识。', pinyin: 'Tā bùduàn de xuéxí xīn zhīshi.', english: 'He continuously learns new knowledge.' },
+                    { chinese: '雨下得不断。', pinyin: 'Yǔ xià de bùduàn.', english: 'The rain fell continuously.' }
+                ]},
+                { id: 'hsk4-qinzi', pattern: '亲自', explanation: 'Personally; in person. Emphasizes that the action is done by the person themselves, not through an intermediary.', examples: [
+                    { chinese: '他亲自给我打电话。', pinyin: 'Tā qīnzì gěi wǒ dǎ diànhuà.', english: 'He personally called me.' },
+                    { chinese: '老板亲自接待了我们。', pinyin: 'Lǎobǎn qīnzì jiēdài le wǒmen.', english: 'The boss personally received us.' }
+                ]},
+                { id: 'hsk4-huxiang', pattern: '互相', explanation: 'Each other; mutually. Indicates a reciprocal action.', examples: [
+                    { chinese: '他们互相帮助。', pinyin: 'Tāmen hùxiāng bāngzhù.', english: 'They help each other.' },
+                    { chinese: '我们应该互相理解。', pinyin: 'Wǒmen yīnggāi hùxiāng lǐjiě.', english: 'We should understand each other.' }
+                ]},
+                { id: 'hsk4-gezi', pattern: '各自', explanation: 'Respectively; each. Refers to individuals or groups doing something separately or on their own.', examples: [
+                    { chinese: '他们各自回家了。', pinyin: 'Tāmen gèzì huí jiā le.', english: 'They each went home.' },
+                    { chinese: '大家各自发表了意见。', pinyin: 'Dàjiā gèzì fābiǎo le yìjiàn.', english: 'Everyone expressed their opinions respectively.' }
+                ]},
+                { id: 'hsk4-youqi', pattern: '尤其', explanation: 'Especially; particularly. Used to highlight a specific item or aspect.', examples: [
+                    { chinese: '我喜欢吃水果，尤其是苹果。', pinyin: 'Wǒ xǐhuān chī shuǐguǒ, yóuqí shì píngguǒ.', english: 'I like eating fruit, especially apples.' },
+                    { chinese: '他很聪明，尤其是在数学方面。', pinyin: 'Tā hěn cōngmíng, yóuqí shì zài shùxué fāngmiàn.', english: 'He is very smart, especially in mathematics.' }
+                ]},
+                { id: 'hsk4-zongsuan', pattern: '总算', explanation: 'At long last; finally. Indicates that something desired or expected has finally happened after a long wait or effort.', examples: [
+                    { chinese: '他总算来了。', pinyin: 'Tā zǒngsuàn lái le.', english: 'He finally came.' },
+                    { chinese: '我们总算完成了这个任务。', pinyin: 'Wǒmen zǒngsuàn wánchéng le zhège rènwu.', english: 'We finally completed this task.' }
+                ]},
+            ]
+        };
+
+        const { useState, useEffect, useCallback } = React;
+        const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, setDoc, getDoc } = window.firebase;
+
+        function App() {
+            const [currentLevel, setCurrentLevel] = useState('hsk1');
+            const [currentDeck, setCurrentDeck] = useState([]);
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [showExplanation, setShowExplanation] = useState(true);
+            const [showExamples, setShowExamples] = useState(true);
+            const [llmOutput, setLlmOutput] = useState('');
+            const [isLoadingLlm, setIsLoadingLlm] = useState(false);
+            const [db, setDb] = useState(null);
+            const [auth, setAuth] = useState(null);
+            const [userId, setUserId] = useState(null);
+            const [isAuthReady, setIsAuthReady] = useState(false);
+            const [masteredGrammar, setMasteredGrammar] = useState({});
+            const [showMasteredOnly, setShowMasteredOnly] = useState(false);
+
+            // Initialize Firebase and authenticate
+            useEffect(() => {
+                if (firebaseConfig) {
+                    try {
+                        const app = initializeApp(firebaseConfig);
+                        const firestore = getFirestore(app);
+                        const firebaseAuth = getAuth(app);
+                        setDb(firestore);
+                        setAuth(firebaseAuth);
+
+                        const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
+                            if (user) {
+                                setUserId(user.uid);
+                                console.log("Firebase authenticated. User ID:", user.uid);
+                            } else {
+                                try {
+                                    if (initialAuthToken) {
+                                        await signInWithCustomToken(firebaseAuth, initialAuthToken);
+                                        setUserId(firebaseAuth.currentUser.uid);
+                                        console.log("Signed in with custom token.");
+                                    } else {
+                                        await signInAnonymously(firebaseAuth);
+                                        setUserId(firebaseAuth.currentUser.uid);
+                                        console.log("Signed in anonymously.");
+                                    }
+                                } catch (error) {
+                                    console.error("Firebase authentication failed:", error);
+                                    setUserId(crypto.randomUUID());
+                                }
+                            }
+                            setIsAuthReady(true);
+                        });
+
+                        return () => unsubscribe();
+                    } catch (error) {
+                        console.error("Error initializing Firebase:", error);
+                        setUserId(crypto.randomUUID());
+                        setIsAuthReady(true);
+                    }
+                } else {
+                    console.warn("Firebase config not found. Running without persistence.");
+                    setUserId(crypto.randomUUID());
+                    setIsAuthReady(true);
+                }
+            }, []);
+
+            // Load user progress when auth is ready and userId is available
+            useEffect(() => {
+                const loadProgress = async () => {
+                    if (isAuthReady && db && userId) {
+                        try {
+                            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/grammar_progress`, 'mastery_status');
+                            const docSnap = await getDoc(userDocRef);
+                            if (docSnap.exists()) {
+                                setMasteredGrammar(docSnap.data().status || {});
+                                console.log("Loaded mastery status:", docSnap.data().status);
+                            } else {
+                                console.log("No mastery status found for user. Starting fresh.");
+                                setMasteredGrammar({});
+                            }
+                        } catch (error) {
+                            console.error("Error loading mastery status:", error);
+                        }
+                    }
+                };
+                loadProgress();
+            }, [isAuthReady, db, userId]);
+
+            // Save user progress
+            const saveProgress = useCallback(async (updatedMastery) => {
+                if (db && userId) {
+                    try {
+                        const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/grammar_progress`, 'mastery_status');
+                        await setDoc(userDocRef, { status: updatedMastery }, { merge: true });
+                        console.log("Mastery status saved.");
+                    } catch (error) {
+                        console.error("Error saving mastery status:", error);
+                    }
+                }
+            }, [db, userId]);
+
+            // Filter and set the current deck based on level and mastery filter
+            const updateCurrentDeck = useCallback(() => {
+                const levelData = grammarData[currentLevel] || [];
+                let filteredDeck = levelData;
+
+                if (showMasteredOnly) {
+                    filteredDeck = levelData.filter(grammar => masteredGrammar[grammar.id]);
+                }
+
+                // Shuffle the filtered deck
+                for (let i = filteredDeck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [filteredDeck[i], filteredDeck[j]] = [filteredDeck[j], filteredDeck[i]];
+                }
+
+                setCurrentDeck(filteredDeck);
+                setCurrentIndex(0); // Reset index when deck changes
+                setLlmOutput(''); // Clear LLM output
+            }, [currentLevel, showMasteredOnly, masteredGrammar]);
+
+            // Effect to update deck when level or mastery filter changes
+            useEffect(() => {
+                if (isAuthReady) {
+                    updateCurrentDeck();
+                }
+            }, [currentLevel, isAuthReady, updateCurrentDeck]);
+
+            // Render the current grammar card
+            const renderCard = useCallback(() => {
+                if (currentDeck.length === 0) {
+                    return (
+                        <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
+                            <p className="text-xl">No grammar points in this selection.</p>
+                            {showMasteredOnly && <p className="text-md mt-2">Try unchecking "Show Mastered Only" or mark some cards as mastered.</p>}
+                        </div>
+                    );
+                }
+
+                const grammar = currentDeck[currentIndex];
+                const isMastered = masteredGrammar[grammar.id];
+
+                return (
+                    <div className="relative w-full h-full flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
+                        <div className="absolute top-4 left-4 text-sm text-teal-600 font-medium">
+                            {grammar.category}
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-bold text-teal-800 mb-4">{grammar.pattern}</h2>
+
+                        {showExplanation && (
+                            <div className="text-center mb-4">
+                                <h3 className="text-xl font-semibold text-gray-700">Explanation:</h3>
+                                <p className="text-lg text-gray-600 mt-2">{grammar.explanation}</p>
+                            </div>
+                        )}
+
+                        {showExamples && (
+                            <div className="text-center mt-4">
+                                <h3 className="text-xl font-semibold text-gray-700">Examples:</h3>
+                                {grammar.examples.map((ex, idx) => (
+                                    <div key={idx} className="mt-2 text-left">
+                                        <p className="text-lg text-gray-800 font-medium">{ex.chinese}</p>
+                                        <p className="text-md text-gray-600">{ex.pinyin}</p>
+                                        <p className="text-md text-gray-500 italic">{ex.english}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => toggleMastery(grammar.id)}
+                            className={`absolute bottom-4 right-4 py-1 px-3 rounded-full text-sm font-semibold transition-colors duration-200 ${
+                                isMastered ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-green-100'
+                            }`}
+                        >
+                            {isMastered ? 'Mastered ✅' : 'Mark as Mastered'}
+                        </button>
+                    </div>
+                );
+            }, [currentDeck, currentIndex, showExplanation, showExamples, masteredGrammar]);
+
+            // Toggle mastery status and save to Firebase
+            const toggleMastery = useCallback((grammarId) => {
+                setMasteredGrammar(prevStatus => {
+                    const updatedStatus = { ...prevStatus, [grammarId]: !prevStatus[grammarId] };
+                    saveProgress(updatedStatus);
+                    return updatedStatus;
+                });
+            }, [saveProgress]);
+
+            // Navigation functions
+            const nextCard = () => {
+                if (currentDeck.length === 0) return;
+                setCurrentIndex((prevIndex) => (prevIndex + 1) % currentDeck.length);
+                setLlmOutput(''); // Clear LLM output on navigation
+            };
+
+            const prevCard = () => {
+                if (currentDeck.length === 0) return;
+                setCurrentIndex((prevIndex) => (prevIndex - 1 + currentDeck.length) % currentDeck.length);
+                setLlmOutput(''); // Clear LLM output on navigation
+            };
+
+            // Shuffle the current deck
+            const shuffleDeck = useCallback(() => {
+                updateCurrentDeck(); // Re-filters and shuffles
+            }, [updateCurrentDeck]);
+
+            // LLM Integration for more examples
+            const getMoreExamples = async () => {
+                setIsLoadingLlm(true);
+                setLlmOutput('Loading more examples...');
+                const currentGrammar = currentDeck[currentIndex];
+                const prompt = `Provide 2-3 more example sentences in Chinese using the grammar pattern '${currentGrammar.pattern}' (meaning: '${currentGrammar.explanation}'). For each example, include its Pinyin and English translation. Format each example on a new line as: 'Chinese Sentence\nPinyin\nEnglish Translation'.`;
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; // API key is handled by the environment
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        setLlmOutput(text.replace(/\n/g, '<br>'));
+                    } else {
+                        setLlmOutput('Failed to generate examples. Please try again.');
+                    }
+                } catch (error) {
+                    console.error("Error fetching LLM examples:", error);
+                    setLlmOutput('Error generating examples. Please check your connection.');
+                } finally {
+                    setIsLoadingLlm(false);
+                }
+            };
+
+            // Keyboard navigation
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (e.key === 'ArrowRight') {
+                        nextCard();
+                    } else if (e.key === 'ArrowLeft') {
+                        prevCard();
+                    }
+                };
+                document.addEventListener('keydown', handleKeyDown);
+                return () => document.removeEventListener('keydown', handleKeyDown);
+            }, [nextCard, prevCard]);
+
+            // Display loading message while Firebase auth is not ready
+            if (!isAuthReady) {
+                return (
+                    <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-700">
+                        Loading application...
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center p-4 font-sans text-gray-800 w-full">
+                    <h1 className="text-4xl font-extrabold text-indigo-800 mb-6 text-center">
+                        Chinese Grammar Flashcards
+                    </h1>
+
+                    <div className="flex flex-wrap justify-center gap-2 mb-6">
+                        {['hsk1', 'hsk2', 'hsk3', 'hsk4'].map(level => (
+                            <button
+                                key={level}
+                                onClick={() => setCurrentLevel(level)}
+                                className={`py-2 px-4 rounded-full font-semibold transition-all duration-200 ease-in-out
+                                    ${currentLevel === level ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-indigo-700 border border-indigo-300 hover:bg-indigo-50 hover:border-indigo-400'}`}
+                            >
+                                {level.toUpperCase()} Grammar
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-2xl mb-4 gap-3">
+                        <button
+                            onClick={shuffleDeck}
+                            className="w-full sm:w-auto flex-grow bg-white text-indigo-700 font-semibold py-2 px-4 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                        >
+                            Shuffle Deck
+                        </button>
+                        <div className="w-full sm:w-auto flex items-center justify-center gap-2">
+                            <label htmlFor="mastered-toggle" className="text-gray-700 text-sm font-medium">Show Mastered Only:</label>
+                            <input
+                                type="checkbox"
+                                id="mastered-toggle"
+                                checked={showMasteredOnly}
+                                onChange={() => setShowMasteredOnly(!showMasteredOnly)}
+                                className="form-checkbox h-5 w-5 text-indigo-600 rounded-md border-gray-300 focus:ring-indigo-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="w-full max-w-2xl h-[450px] md:h-[500px] mb-6">
+                        {renderCard()}
+                    </div>
+
+                    <div className="text-center text-gray-600 font-medium mb-6">
+                        {currentDeck.length > 0 ? `${currentIndex + 1} / ${currentDeck.length}` : '0 / 0'}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-2xl mb-4">
+                        <button
+                            onClick={() => setShowExplanation(!showExplanation)}
+                            className="bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-200"
+                        >
+                            {showExplanation ? 'Hide Explanation' : 'Show Explanation'}
+                        </button>
+                        <button
+                            onClick={() => setShowExamples(!showExamples)}
+                            className="bg-purple-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-purple-600 transition-colors duration-200"
+                        >
+                            {showExamples ? 'Hide Examples' : 'Show Examples'}
+                        </button>
+                    </div>
+
+                    <div className="w-full max-w-2xl mb-4">
+                        <button
+                            onClick={getMoreExamples}
+                            disabled={isLoadingLlm || currentDeck.length === 0}
+                            className="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isLoadingLlm ? 'Generating Examples...' : '✨ Get More Examples (AI)'}
+                        </button>
+                        {llmOutput && (
+                            <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 text-sm leading-relaxed">
+                                <h3 className="font-semibold text-base mb-2">AI Generated Examples:</h3>
+                                <p dangerouslySetInnerHTML={{ __html: llmOutput }}></p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
+                        <button
+                            onClick={prevCard}
+                            disabled={currentDeck.length === 0}
+                            className="bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={nextCard}
+                            disabled={currentDeck.length === 0}
+                            className="bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+
+                    {userId && (
+                        <div className="mt-6 text-xs text-gray-500 text-center">
+                            Your User ID: {userId} (for progress tracking)
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Mount the React App
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
