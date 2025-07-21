@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chinese Grammar Flashcards</title>
+    <title>Chinese Grammar Flashcards (Thai)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inter Font -->
@@ -25,378 +25,350 @@
     <!-- Babel for JSX transformation in browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Expose Firebase functions globally for the Babel-transformed script
-        window.firebase = {
-            initializeApp,
-            getAuth,
-            signInAnonymously,
-            signInWithCustomToken,
-            onAuthStateChanged,
-            getFirestore,
-            doc,
-            setDoc,
-            getDoc
-        };
-    </script>
-
     <script type="text/babel">
-        // Global Firebase configuration and app ID (provided by the environment)
-        // These variables are injected into the Canvas environment.
-        // If running locally without Canvas, they will be undefined, so provide fallbacks.
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const { useState, useEffect, useCallback } = React;
 
-        // HSK Grammar Data (HSK 1-4)
+        // HSK Grammar Data (HSK 1-4) with Thai placeholders
         const grammarData = {
             'hsk1': [
-                { id: 'hsk1-shi', pattern: '是...', explanation: 'Used to connect nouns or pronouns, indicating identity, classification, or judgment. It can be negated with 不 (bù).', examples: [
-                    { chinese: '我是学生。', pinyin: 'Wǒ shì xuéshēng.', english: 'I am a student.' },
-                    { chinese: '他不是老师。', pinyin: 'Tā bú shì lǎoshī.', english: 'He is not a teacher.' },
-                    { chinese: '这是我的书。', pinyin: 'Zhè shì wǒ de shū.', english: 'This is my book.' }
+                { id: 'hsk1-shi', pattern: '是...', explanation: '[คำอธิบายภาษาไทย: ใช้เชื่อมคำนามหรือคำสรรพนาม เพื่อระบุตัวตน การจัดประเภท หรือการตัดสิน สามารถปฏิเสธได้ด้วย 不 (bù)]', examples: [
+                    { chinese: '我是学生。', pinyin: 'Wǒ shì xuéshēng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันเป็นนักเรียน]' },
+                    { chinese: '他不是老师。', pinyin: 'Tā bú shì lǎoshī.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาไม่ใช่ครู]' },
+                    { chinese: '这是我的书。', pinyin: 'Zhè shì wǒ de shū.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: นี่คือหนังสือของฉัน]' }
                 ]},
-                { id: 'hsk1-bu', pattern: '不 + Verb/Adjective', explanation: 'Used to negate verbs or adjectives, indicating "not" or "no".', examples: [
-                    { chinese: '我不好。', pinyin: 'Wǒ bù hǎo.', english: 'I am not good.' },
-                    { chinese: '他不去学校。', pinyin: 'Tā bú qù xuéxiào.', english: 'He doesn\'t go to school.' },
-                    { chinese: '我不喜欢咖啡。', pinyin: 'Wǒ bù xǐhuān kāfēi.', english: 'I don\'t like coffee.' }
+                { id: 'hsk1-bu', pattern: '不 + Verb/Adjective', explanation: '[คำอธิบายภาษาไทย: ใช้ปฏิเสธคำกริยาหรือคำคุณศัพท์ หมายถึง "ไม่" หรือ "ไม่ใช่"]', examples: [
+                    { chinese: '我不好。', pinyin: 'Wǒ bù hǎo.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันไม่สบาย]' },
+                    { chinese: '他不去学校。', pinyin: 'Tā bú qù xuéxiào.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาไม่ไปโรงเรียน]' },
+                    { chinese: '我不喜欢咖啡。', pinyin: 'Wǒ bù xǐhuān kāfēi.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันไม่ชอบกาแฟ]' }
                 ]},
-                { id: 'hsk1-ma', pattern: '...吗?', explanation: 'A question particle placed at the end of a declarative sentence to turn it into a yes/no question.', examples: [
-                    { chinese: '你是中国人吗？', pinyin: 'Nǐ shì Zhōngguó rén ma?', english: 'Are you Chinese?' },
-                    { chinese: '她喜欢吃米饭吗？', pinyin: 'Tā xǐhuān chī mǐfàn ma?', english: 'Does she like to eat rice?' }
+                { id: 'hsk1-ma', pattern: '...吗?', explanation: '[คำอธิบายภาษาไทย: คำเสริมท้ายประโยคคำถามแบบใช่/ไม่ใช่ วางไว้ท้ายประโยคบอกเล่าเพื่อให้เป็นคำถาม]', examples: [
+                    { chinese: '你是中国人吗？', pinyin: 'Nǐ shì Zhōngguó rén ma?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: คุณเป็นคนจีนไหม]' },
+                    { chinese: '她喜欢吃米饭吗？', pinyin: 'Tā xǐhuān chī mǐfàn ma?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เธอชอบกินข้าวไหม]' }
                 ]},
-                { id: 'hsk1-ne', pattern: '...呢?', explanation: 'A question particle used to ask "How about...?" or to inquire about the location of someone/something already mentioned.', examples: [
-                    { chinese: '我很好，你呢？', pinyin: 'Wǒ hěn hǎo, nǐ ne?', english: 'I\'m fine, how about you?' },
-                    { chinese: '我的书在这里，你的呢？', pinyin: 'Wǒ de shū zài zhèlǐ, nǐ de ne?', english: 'My book is here, how about yours?' }
+                { id: 'hsk1-ne', pattern: '...呢?', explanation: '[คำอธิบายภาษาไทย: คำเสริมท้ายประโยคคำถามที่ใช้ถามว่า "แล้ว...ล่ะ?" หรือสอบถามตำแหน่งของบุคคล/สิ่งของที่กล่าวถึงไปแล้ว]', examples: [
+                    { chinese: '我很好，你呢？', pinyin: 'Wǒ hěn hǎo, nǐ ne?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันสบายดี แล้วคุณล่ะ]' },
+                    { chinese: '我的书在这里，你的呢？', pinyin: 'Wǒ de shū zài zhèlǐ, nǐ de ne?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: หนังสือของฉันอยู่ที่นี่ แล้วของคุณล่ะ]' }
                 ]},
-                { id: 'hsk1-hen', pattern: '很 + Adjective', explanation: 'Used before adjectives as a common way to express a degree, often translated as "very" but can also just soften the adjective. It\'s often used even when not emphasizing "very".', examples: [
-                    { chinese: '她很高兴。', pinyin: 'Tā hěn gāoxìng.', english: 'She is very happy.' },
-                    { chinese: '这个苹果很好吃。', pinyin: 'Zhège píngguǒ hěn hǎochī.', english: 'This apple is delicious.' }
+                { id: 'hsk1-hen', pattern: '很 + Adjective', explanation: '[คำอธิบายภาษาไทย: ใช้หน้าคำคุณศัพท์เพื่อแสดงระดับความเข้มข้น มักแปลว่า "มาก" แต่อาจใช้เพื่อทำให้คำคุณศัพท์ดูอ่อนลงก็ได้ มักใช้แม้ว่าจะไม่ได้เน้นคำว่า "มาก" ก็ตาม]', examples: [
+                    { chinese: '她很高兴。', pinyin: 'Tā hěn gāoxìng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เธอมีความสุขมาก]' },
+                    { chinese: '这个苹果很好吃。', pinyin: 'Zhège píngguǒ hěn hǎochī.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: แอปเปิ้ลลูกนี้อร่อยมาก]' }
                 ]},
-                { id: 'hsk1-you', pattern: '有', explanation: 'To have; there is/are. Negated with 没有 (méiyǒu).', examples: [
-                    { chinese: '我有一个妹妹。', pinyin: 'Wǒ yǒu yī gè mèimei.', english: 'I have a younger sister.' },
-                    { chinese: '桌子上没有水。', pinyin: 'Zhuōzi shàng méiyǒu shuǐ.', english: 'There is no water on the table.' }
+                { id: 'hsk1-you', pattern: '有', explanation: '[คำอธิบายภาษาไทย: มี; มีอยู่/เป็นอยู่ ปฏิเสธด้วย 没有 (méiyǒu)]', examples: [
+                    { chinese: '我有一个妹妹。', pinyin: 'Wǒ yǒu yī gè mèimei.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันมีน้องสาวหนึ่งคน]' },
+                    { chinese: '桌子上没有水。', pinyin: 'Zhuōzi shàng méiyǒu shuǐ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: บนโต๊ะไม่มีน้ำ]' }
                 ]},
-                { id: 'hsk1-zai', pattern: '在 + Place', explanation: 'Indicates location or presence at a place. The structure is Subject + 在 + Place.', examples: [
-                    { chinese: '他在学校。', pinyin: 'Tā zài xuéxiào.', english: 'He is at school.' },
-                    { chinese: '我的朋友在北京。', pinyin: 'Wǒ de péngyou zài Běijīng.', english: 'My friend is in Beijing.' }
+                { id: 'hsk1-zai', pattern: '在 + Place', explanation: '[คำอธิบายภาษาไทย: บ่งบอกตำแหน่งหรือการมีอยู่ ณ สถานที่นั้นๆ โครงสร้างคือ ประธาน + 在 + สถานที่]', examples: [
+                    { chinese: '他在学校。', pinyin: 'Tā zài xuéxiào.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาอยู่ที่โรงเรียน]' },
+                    { chinese: '我的朋友在北京。', pinyin: 'Wǒ de péngyou zài Běijīng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เพื่อนของฉันอยู่ที่ปักกิ่ง]' }
                 ]},
-                { id: 'hsk1-qu-lai', pattern: '去 / 来', explanation: 'Directional verbs. 去 (qù) means "to go" (away from the speaker), 来 (lái) means "to come" (towards the speaker).', examples: [
-                    { chinese: '你去哪儿？', pinyin: 'Nǐ qù nǎr?', english: 'Where are you going?' },
-                    { chinese: '他来我家。', pinyin: 'Tā lái wǒ jiā.', english: 'He is coming to my home.' }
+                { id: 'hsk1-qu-lai', pattern: '去 / 来', explanation: '[คำอธิบายภาษาไทย: คำกริยาบอกทิศทาง 去 (qù) หมายถึง "ไป" (ออกจากผู้พูด), 来 (lái) หมายถึง "มา" (เข้าหาผู้พูด)]', examples: [
+                    { chinese: '你去哪儿？', pinyin: 'Nǐ qù nǎr?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: คุณจะไปไหน]' },
+                    { chinese: '他来我家。', pinyin: 'Tā lái wǒ jiā.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขามาที่บ้านของฉัน]' }
                 ]},
-                { id: 'hsk1-de', pattern: '的', explanation: 'Possessive particle. Used after a pronoun or noun to indicate possession or a descriptive relationship.', examples: [
-                    { chinese: '这是我的书。', pinyin: 'Zhè shì wǒ de shū.', english: 'This is my book.' },
-                    { chinese: '她是一个漂亮的女孩。', pinyin: 'Tā shì yī gè piàoliang de nǚhái.', english: 'She is a beautiful girl.' }
+                { id: 'hsk1-de', pattern: '的', explanation: '[คำอธิบายภาษาไทย: คำเสริมแสดงความเป็นเจ้าของ ใช้หลังคำสรรพนามหรือคำนามเพื่อแสดงความเป็นเจ้าของหรือความสัมพันธ์เชิงบรรยาย]', examples: [
+                    { chinese: '这是我的书。', pinyin: 'Zhè shì wǒ de shū.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: นี่คือหนังสือของฉัน]' },
+                    { chinese: '她是一个漂亮的女孩。', pinyin: 'Tā shì yī gè piàoliang de nǚhái.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เธอเป็นผู้หญิงที่สวย]' }
                 ]},
-                { id: 'hsk1-he', pattern: '和', explanation: 'Conjunction "and". Used to connect nouns, pronouns, or phrases. It cannot connect verbs or clauses directly.', examples: [
-                    { chinese: '我和他都是学生。', pinyin: 'Wǒ hé tā dōu shì xuéshēng.', english: 'Both he and I are students.' },
-                    { chinese: '我喜欢吃米饭和菜。', pinyin: 'Wǒ xǐhuān chī mǐfàn hé cài.', english: 'I like to eat rice and dishes.' }
+                { id: 'hsk1-he', pattern: '和', explanation: '[คำอธิบายภาษาไทย: คำสันธาน "และ" ใช้เชื่อมคำนาม คำสรรพนาม หรือวลี ไม่สามารถเชื่อมคำกริยาหรืออนุประโยคได้โดยตรง]', examples: [
+                    { chinese: '我和他都是学生。', pinyin: 'Wǒ hé tā dōu shì xuéshēng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันกับเขาทั้งคู่เป็นนักเรียน]' },
+                    { chinese: '我喜欢吃米饭和菜。', pinyin: 'Wǒ xǐhuān chī mǐfàn hé cài.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันชอบกินข้าวและกับข้าว]' }
                 ]},
-                { id: 'hsk1-duoshao-ji', pattern: '多少 / 几', explanation: 'Both ask "how many/much". 几 (jǐ) is used for small numbers (usually 1-10) or when the number is expected to be small. 多少 (duōshao) is used for larger, unknown quantities.', examples: [
-                    { chinese: '你家有几口人？', pinyin: 'Nǐ jiā yǒu jǐ kǒu rén?', english: 'How many people are in your family?' },
-                    { chinese: '这个学校有多少学生？', pinyin: 'Zhège xuéxiào yǒu duōshao xuéshēng?', english: 'How many students are in this school?' }
+                { id: 'hsk1-duoshao-ji', pattern: '多少 / 几', explanation: '[คำอธิบายภาษาไทย: ทั้งคู่ถามว่า "เท่าไหร่/กี่" 几 (jǐ) ใช้สำหรับจำนวนน้อย (ปกติ 1-10) หรือเมื่อคาดว่าจำนวนจะน้อย 多少 (duōshao) ใช้สำหรับปริมาณที่ไม่ทราบจำนวนที่มากกว่า]', examples: [
+                    { chinese: '你家有几口人？', pinyin: 'Nǐ jiā yǒu jǐ kǒu rén?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: บ้านคุณมีกี่คน]' },
+                    { chinese: '这个学校有多少学生？', pinyin: 'Zhège xuéxiào yǒu duōshao xuéshēng?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: โรงเรียนนี้มีนักเรียนกี่คน]' }
                 ]},
-                { id: 'hsk1-zenme', pattern: '怎么?', explanation: 'Asks "how?" or "why?". Used to inquire about manner, method, or reason.', examples: [
-                    { chinese: '这个字怎么写？', pinyin: 'Zhège zì zěnme xiě？', english: 'How do you write this character?' },
-                    { chinese: '你怎么了？', pinyin: 'Nǐ zěnme le？', english: 'What\'s wrong with you?' }
+                { id: 'hsk1-zenme', pattern: '怎么?', explanation: '[คำอธิบายภาษาไทย: ถามว่า "อย่างไร?" หรือ "ทำไม?" ใช้สอบถามเกี่ยวกับลักษณะ วิธีการ หรือเหตุผล]', examples: [
+                    { chinese: '这个字怎么写？', pinyin: 'Zhège zì zěnme xiě？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ตัวอักษรนี้เขียนอย่างไร]' },
+                    { chinese: '你怎么了？', pinyin: 'Nǐ zěnme le？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: คุณเป็นอะไรไป]' }
                 ]},
-                { id: 'hsk1-shenme', pattern: '什么?', explanation: 'Asks "what?". Used to inquire about things, actions, or attributes.', examples: [
-                    { chinese: '你叫什么名字？', pinyin: 'Nǐ jiào shénme míngzi？', english: 'What is your name?' },
-                    { chinese: '这是什么？', pinyin: 'Zhè shì shénme？', english: 'What is this?' }
+                { id: 'hsk1-shenme', pattern: '什么?', explanation: '[คำอธิบายภาษาไทย: ถามว่า "อะไร?" ใช้สอบถามเกี่ยวกับสิ่งของ การกระทำ หรือคุณลักษณะ]', examples: [
+                    { chinese: '你叫什么名字？', pinyin: 'Nǐ jiào shénme míngzi？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: คุณชื่ออะไร]' },
+                    { chinese: '这是什么？', pinyin: 'Zhè shì shénme？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: นี่คืออะไร]' }
                 ]},
-                { id: 'hsk1-shei', pattern: '谁?', explanation: 'Asks "who?". Used to inquire about a person.', examples: [
-                    { chinese: '他是谁？', pinyin: 'Tā shì shéi？', english: 'Who is he?' },
-                    { chinese: '谁喜欢喝茶？', pinyin: 'Shéi xǐhuān hē chá？', english: 'Who likes to drink tea?' }
+                { id: 'hsk1-shei', pattern: '谁?', explanation: '[คำอธิบายภาษาไทย: ถามว่า "ใคร?" ใช้สอบถามเกี่ยวกับบุคคล]', examples: [
+                    { chinese: '他是谁？', pinyin: 'Tā shì shéi？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาคือใคร]' },
+                    { chinese: '谁喜欢喝茶？', pinyin: 'Shéi xǐhuān hē chá？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ใครชอบดื่มชา]' }
                 ]},
-                { id: 'hsk1-nar', pattern: '哪儿?', explanation: 'Asks "where?". Used to inquire about a location.', examples: [
-                    { chinese: '你去哪儿？', pinyin: 'Nǐ qù nǎr？', english: 'Where are you going?' },
-                    { chinese: '你的家在哪儿？', pinyin: 'Nǐ de jiā zài nǎr？', english: 'Where is your home?' }
+                { id: 'hsk1-nar', pattern: '哪儿?', explanation: '[คำอธิบายภาษาไทย: ถามว่า "ที่ไหน?" ใช้สอบถามเกี่ยวกับสถานที่]', examples: [
+                    { chinese: '你去哪儿？', pinyin: 'Nǐ qù nǎr？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: คุณจะไปที่ไหน]' },
+                    { chinese: '你的家在哪儿？', pinyin: 'Nǐ de jiā zài nǎr？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: บ้านของคุณอยู่ที่ไหน]' }
                 ]},
-                { id: 'hsk1-taile', pattern: '太...了', explanation: 'Indicates an excessive degree, often translated as "too...". Can be positive or negative depending on context.', examples: [
-                    { chinese: '这个太大了。', pinyin: 'Zhège tài dà le.', english: 'This is too big.' },
-                    { chinese: '今天太热了。', pinyin: 'Jīntiān tài rè le.', english: 'It\'s too hot today.' }
+                { id: 'hsk1-taile', pattern: '太...了', explanation: '[คำอธิบายภาษาไทย: บ่งบอกระดับที่มากเกินไป มักแปลว่า "เกินไป..." อาจเป็นบวกหรือลบขึ้นอยู่กับบริบท]', examples: [
+                    { chinese: '这个太大了。', pinyin: 'Zhège tài dà le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: อันนี้ใหญ่เกินไป]' },
+                    { chinese: '今天太热了。', pinyin: 'Jīntiān tài rè le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: วันนี้ร้อนเกินไป]' }
                 ]},
-                { id: 'hsk1-le', pattern: '了', explanation: 'Completion particle. Indicates the completion or realization of an action or a change of state.', examples: [
-                    { chinese: '我吃饭了。', pinyin: 'Wǒ chī fàn le.', english: 'I have eaten.' },
-                    { chinese: '下雨了。', pinyin: 'Xià yǔ le.', english: 'It\'s raining now (or it started raining).' }
+                { id: 'hsk1-le', pattern: '了', explanation: '[คำอธิบายภาษาไทย: คำเสริมแสดงความสมบูรณ์ บ่งบอกการเสร็จสิ้นหรือการเกิดขึ้นของการกระทำ หรือการเปลี่ยนแปลงสถานะ]', examples: [
+                    { chinese: '我吃饭了。', pinyin: 'Wǒ chī fàn le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันกินข้าวแล้ว]' },
+                    { chinese: '下雨了。', pinyin: 'Xià yǔ le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฝนตกแล้ว (หรือเริ่มตกแล้ว)]' }
                 ]},
             ],
             'hsk2': [
-                { id: 'hsk2-hui', pattern: '会', explanation: 'Can (ability learned through study/training); will (future tense or likelihood).', examples: [
-                    { chinese: '我会说汉语。', pinyin: 'Wǒ huì shuō Hànyǔ.', english: 'I can speak Chinese.' },
-                    { chinese: '明天会下雨。', pinyin: 'Míngtiān huì xià yǔ.', english: 'It will rain tomorrow.' }
+                { id: 'hsk2-hui', pattern: '会', explanation: '[คำอธิบายภาษาไทย: สามารถ (ความสามารถที่เรียนรู้จากการศึกษา/ฝึกฝน); จะ (กาลอนาคตหรือความเป็นไปได้)]', examples: [
+                    { chinese: '我会说汉语。', pinyin: 'Wǒ huì shuō Hànyǔ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันพูดภาษาจีนได้]' },
+                    { chinese: '明天会下雨。', pinyin: 'Míngtiān huì xià yǔ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: พรุ่งนี้ฝนจะตก]' }
                 ]},
-                { id: 'hsk2-xiang', pattern: '想', explanation: 'To want; to think; to miss (someone).', examples: [
-                    { chinese: '我想去中国。', pinyin: 'Wǒ xiǎng qù Zhōngguó.', english: 'I want to go to China.' },
-                    { chinese: '我想你。', pinyin: 'Wǒ xiǎng nǐ.', english: 'I miss you.' }
+                { id: 'hsk2-xiang', pattern: '想', explanation: '[คำอธิบายภาษาไทย: ต้องการ; คิด; คิดถึง (ใครบางคน)]', examples: [
+                    { chinese: '我想去中国。', pinyin: 'Wǒ xiǎng qù Zhōngguó.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันอยากไปประเทศจีน]' },
+                    { chinese: '我想你。', pinyin: 'Wǒ xiǎng nǐ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันคิดถึงคุณ]' }
                 ]},
-                { id: 'hsk2-yao', pattern: '要', explanation: 'To want; to be going to; must. Stronger desire or intention than 想 (xiǎng).', examples: [
-                    { chinese: '我要买一个新手机。', pinyin: 'Wǒ yào mǎi yī gè xīn shǒujī.', english: 'I want to buy a new phone.' },
-                    { chinese: '他要来我家。', pinyin: 'Tā yào lái wǒ jiā.', english: 'He is going to come to my house.' }
+                { id: 'hsk2-yao', pattern: '要', explanation: '[คำอธิบายภาษาไทย: ต้องการ; กำลังจะ; ต้อง ความปรารถนาหรือความตั้งใจที่แรงกว่า 想 (xiǎng)]', examples: [
+                    { chinese: '我要买一个新手机。', pinyin: 'Wǒ yào mǎi yī gè xīn shǒujī.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันต้องการซื้อโทรศัพท์ใหม่หนึ่งเครื่อง]' },
+                    { chinese: '他要来我家。', pinyin: 'Tā yào lái wǒ jiā.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขากำลังจะมาบ้านฉัน]' }
                 ]},
-                { id: 'hsk2-neng', pattern: '能', explanation: 'Can (physical ability or possibility).', examples: [
-                    { chinese: '我能看见你。', pinyin: 'Wǒ néng kànjiàn nǐ.', english: 'I can see you.' },
-                    { chinese: '你现在能来吗？', pinyin: 'Nǐ xiànzài néng lái ma?', english: 'Can you come now?' }
+                { id: 'hsk2-neng', pattern: '能', explanation: '[คำอธิบายภาษาไทย: สามารถ (ความสามารถทางกายภาพหรือความเป็นไปได้)]', examples: [
+                    { chinese: '我能看见你。', pinyin: 'Wǒ néng kànjiàn nǐ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันมองเห็นคุณได้]' },
+                    { chinese: '你现在能来吗？', pinyin: 'Nǐ xiànzài néng lái ma?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ตอนนี้คุณมาได้ไหม]' }
                 ]},
-                { id: 'hsk2-keyi', pattern: '可以', explanation: 'Can (permission).', examples: [
-                    { chinese: '我可以用你的电脑吗？', pinyin: 'Wǒ kěyǐ yòng nǐ de diànnǎo ma?', english: 'May I use your computer?' },
-                    { chinese: '你现在可以走了。', pinyin: 'Nǐ xiànzài kěyǐ zǒu le.', english: 'You can leave now.' }
+                { id: 'hsk2-keyi', pattern: '可以', explanation: '[คำอธิบายภาษาไทย: สามารถ (ได้รับอนุญาต)]', examples: [
+                    { chinese: '我可以用你的电脑吗？', pinyin: 'Wǒ kěyǐ yòng nǐ de diànnǎo ma?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันขอใช้คอมพิวเตอร์ของคุณได้ไหม]' },
+                    { chinese: '你现在可以走了。', pinyin: 'Nǐ xiànzài kěyǐ zǒu le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ตอนนี้คุณไปได้แล้ว]' }
                 ]},
-                { id: 'hsk2-zai-ne', pattern: '在...呢', explanation: 'Indicates an action is ongoing or in progress.', examples: [
-                    { chinese: '他正在睡觉呢。', pinyin: 'Tā zhèngzài shuìjiào ne.', english: 'He is sleeping.' },
-                    { chinese: '我吃饭呢。', pinyin: 'Wǒ chīfàn ne.', english: 'I am eating.' }
+                { id: 'hsk2-zai-ne', pattern: '在...呢', explanation: '[คำอธิบายภาษาไทย: บ่งบอกว่าการกระทำกำลังดำเนินอยู่]', examples: [
+                    { chinese: '他正在睡觉呢。', pinyin: 'Tā zhèngzài shuìjiào ne.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขากำลังนอนอยู่]' },
+                    { chinese: '我吃饭呢。', pinyin: 'Wǒ chīfàn ne.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันกำลังกินข้าวอยู่]' }
                 ]},
-                { id: 'hsk2-guo', pattern: '过', explanation: 'Experiential particle. Indicates that an action has been experienced at some point in the past.', examples: [
-                    { chinese: '我吃过中国菜。', pinyin: 'Wǒ chī guo Zhōngguó cài.', english: 'I have eaten Chinese food.' },
-                    { chinese: '他去过北京。', pinyin: 'Tā qù guo Běijīng.', english: 'He has been to Beijing.' }
+                { id: 'hsk2-guo', pattern: '过', explanation: '[คำอธิบายภาษาไทย: คำเสริมแสดงประสบการณ์ บ่งบอกว่าการกระทำนั้นเคยเกิดขึ้นในอดีต]', examples: [
+                    { chinese: '我吃过中国菜。', pinyin: 'Wǒ chī guo Zhōngguó cài.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันเคยกินอาหารจีน]' },
+                    { chinese: '他去过北京。', pinyin: 'Tā qù guo Běijīng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาเคยไปปักกิ่ง]' }
                 ]},
-                { id: 'hsk2-yidianr', pattern: '一点儿', explanation: 'A little bit. Used after adjectives to indicate a slight degree, or after verbs to indicate a small amount of action.', examples: [
-                    { chinese: '我有点儿累。', pinyin: 'Wǒ yǒudiǎnr lèi.', english: 'I\'m a little tired.' },
-                    { chinese: '请给我一点儿水。', pinyin: 'Qǐng gěi wǒ yīdiǎnr shuǐ.', english: 'Please give me a little water.' }
+                { id: 'hsk2-yidianr', pattern: '一点儿', explanation: '[คำอธิบายภาษาไทย: นิดหน่อย ใช้หลังคำคุณศัพท์เพื่อแสดงระดับเล็กน้อย หรือหลังคำกริยาเพื่อแสดงปริมาณการกระทำเล็กน้อย]', examples: [
+                    { chinese: '我有点儿累。', pinyin: 'Wǒ yǒudiǎnr lèi.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันเหนื่อยเล็กน้อย]' },
+                    { chinese: '请给我一点儿水。', pinyin: 'Qǐng gěi wǒ yīdiǎnr shuǐ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: กรุณาให้น้ำฉันหน่อย]' }
                 ]},
-                { id: 'hsk2-bi', pattern: 'A 比 B + Adjective', explanation: 'Comparison structure, meaning "A is more [adjective] than B".', examples: [
-                    { chinese: '他比我高。', pinyin: 'Tā bǐ wǒ gāo.', english: 'He is taller than me.' },
-                    { chinese: '今天比昨天热。', pinyin: 'Jīntiān bǐ zuótiān rè.', english: 'Today is hotter than yesterday.' }
+                { id: 'hsk2-bi', pattern: 'A 比 B + Adjective', explanation: '[คำอธิบายภาษาไทย: โครงสร้างการเปรียบเทียบ หมายถึง "A [คำคุณศัพท์] กว่า B"]', examples: [
+                    { chinese: '他比我高。', pinyin: 'Tā bǐ wǒ gāo.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาสูงกว่าฉัน]' },
+                    { chinese: '今天比昨天热。', pinyin: 'Jīntiān bǐ zuótiān rè.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: วันนี้ร้อนกว่าเมื่อวาน]' }
                 ]},
-                { id: 'hsk2-de-complement', pattern: 'Verb + 得 + Adjective/Adverb', explanation: 'Structural particle. Used after a verb to describe the manner or result of the action.', examples: [
-                    { chinese: '他说汉语说得很好。', pinyin: 'Tā shuō Hànyǔ shuō de hěn hǎo.', english: 'He speaks Chinese very well.' },
-                    { chinese: '她跑得很快。', pinyin: 'Tā pǎo de hěn kuài.', english: 'She runs very fast.' }
+                { id: 'hsk2-de-complement', pattern: 'Verb + 得 + Adjective/Adverb', explanation: '[คำอธิบายภาษาไทย: คำเสริมโครงสร้าง ใช้หลังคำกริยาเพื่ออธิบายลักษณะหรือผลลัพธ์ของการกระทำ]', examples: [
+                    { chinese: '他说汉语说得很好。', pinyin: 'Tā shuō Hànyǔ shuō de hěn hǎo.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาพูดภาษาจีนได้ดีมาก]' },
+                    { chinese: '她跑得很快。', pinyin: 'Tā pǎo de hěn kuài.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เธอวิ่งเร็วมาก]' }
                 ]},
-                { id: 'hsk2-zhe', pattern: '着', explanation: 'Continuous state. Indicates a continuous state or action, similar to "-ing" in English.', examples: [
-                    { chinese: '门开着。', pinyin: 'Mén kāizhe.', english: 'The door is open.' },
-                    { chinese: '他穿着一件红衣服。', pinyin: 'Tā chuānzhe yī jiàn hóng yīfu.', english: 'He is wearing a red shirt.' }
+                { id: 'hsk2-zhe', pattern: '着', explanation: '[คำอธิบายภาษาไทย: สภาพต่อเนื่อง บ่งบอกสถานะหรือการกระทำที่ต่อเนื่อง คล้ายกับ "-ing" ในภาษาอังกฤษ]', examples: [
+                    { chinese: '门开着。', pinyin: 'Mén kāizhe.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ประตูเปิดอยู่]' },
+                    { chinese: '他穿着一件红衣服。', pinyin: 'Tā chuānzhe yī jiàn hóng yīfu.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขากำลังใส่เสื้อสีแดง]' }
                 ]},
-                { id: 'hsk2-gen-yiqi', pattern: '跟...一起', explanation: 'Together with... Used to indicate that an action is done with someone.', examples: [
-                    { chinese: '我跟朋友一起去商店。', pinyin: 'Wǒ gēn péngyou yīqǐ qù shāngdiàn.', english: 'I go to the store with my friend.' },
-                    { chinese: '我们一起学习汉语。', pinyin: 'Wǒmen yīqǐ xuéxí Hànyǔ.', english: 'We study Chinese together.' }
+                { id: 'hsk2-gen-yiqi', pattern: '跟...一起', explanation: '[คำอธิบายภาษาไทย: ด้วยกันกับ... ใช้บ่งบอกว่าการกระทำทำร่วมกับใครบางคน]', examples: [
+                    { chinese: '我跟朋友一起去商店。', pinyin: 'Wǒ gēn péngyou yīqǐ qù shāngdiàn.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันไปร้านค้ากับเพื่อน]' },
+                    { chinese: '我们一起学习汉语。', pinyin: 'Wǒmen yīqǐ xuéxí Hànyǔ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: พวกเราเรียนภาษาจีนด้วยกัน]' }
                 ]},
-                { id: 'hsk2-cong-dao', pattern: '从...到...', explanation: 'From...to... Used to indicate a range in time or space.', examples: [
-                    { chinese: '从家到学校很远。', pinyin: 'Cóng jiā dào xuéxiào hěn yuǎn.', english: 'It\'s far from home to school.' },
-                    { chinese: '我从早上八点工作到晚上五点。', pinyin: 'Wǒ cóng zǎoshang bā diǎn gōngzuò dào wǎnshang wǔ diǎn.', english: 'I work from 8 AM to 5 PM.' }
+                { id: 'hsk2-cong-dao', pattern: '从...到...', explanation: '[คำอธิบายภาษาไทย: จาก...ถึง... ใช้บ่งบอกช่วงเวลาหรือสถานที่]', examples: [
+                    { chinese: '从家到学校很远。', pinyin: 'Cóng jiā dào xuéxiào hěn yuǎn.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: จากบ้านถึงโรงเรียนไกลมาก]' },
+                    { chinese: '我从早上八点工作到晚上五点。', pinyin: 'Wǒ cóng zǎoshang bā diǎn gōngzuò dào wǎnshang wǔ diǎn.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันทำงานตั้งแต่แปดโมงเช้าถึงห้าโมงเย็น]' }
                 ]},
-                { id: 'hsk2-li-yuan-jin', pattern: '离...远/近', explanation: 'Far/near from... Used to describe distance between two places.', examples: [
-                    { chinese: '我家离学校很近。', pinyin: 'Wǒ jiā lí xuéxiào hěn jìn.', english: 'My home is very close to the school.' },
-                    { chinese: '火车站离这里远吗？', pinyin: 'Huǒchēzhàn lí zhèlǐ yuǎn ma?', english: 'Is the train station far from here?' }
+                { id: 'hsk2-li-yuan-jin', pattern: '离...远/近', explanation: '[คำอธิบายภาษาไทย: ไกล/ใกล้จาก... ใช้เพื่ออธิบายระยะห่างระหว่างสองสถานที่]', examples: [
+                    { chinese: '我家离学校很近。', pinyin: 'Wǒ jiā lí xuéxiào hěn jìn.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: บ้านฉันอยู่ใกล้โรงเรียนมาก]' },
+                    { chinese: '火车站离这里远吗？', pinyin: 'Huǒchēzhàn lí zhèlǐ yuǎn ma?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: สถานีรถไฟอยู่ไกลจากที่นี่ไหม]' }
                 ]},
-                { id: 'hsk2-suiran-danshi', pattern: '虽然...但是...', explanation: 'Although...but... Used to express a concession or contrast.', examples: [
-                    { chinese: '虽然下雨了，但是我们还是要去。', pinyin: 'Suīrán xià yǔ le, dànshì wǒmen háishì yào qù.', english: 'Although it\'s raining, we still want to go.' },
-                    { chinese: '虽然他很忙，但是他很高兴。', pinyin: 'Suīrán tā hěn máng, dànshì tā hěn gāoxìng.', english: 'Although he is very busy, he is very happy.' }
+                { id: 'hsk2-suiran-danshi', pattern: '虽然...但是...', explanation: '[คำอธิบายภาษาไทย: ถึงแม้ว่า...แต่... ใช้เพื่อแสดงการยอมรับหรือความขัดแย้ง]', examples: [
+                    { chinese: '虽然下雨了，但是我们还是要去。', pinyin: 'Suīrán xià yǔ le, dànshì wǒmen háishì yào qù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: แม้ว่าฝนจะตก แต่เราก็ยังจะไป]' },
+                    { chinese: '虽然他很忙，但是他很高兴。', pinyin: 'Suīrán tā hěn máng, dànshì tā hěn gāoxìng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: แม้ว่าเขาจะยุ่งมาก แต่เขาก็มีความสุขมาก]' }
                 ]},
-                { id: 'hsk2-yinwei-suoyi', pattern: '因为...所以...', explanation: 'Because...therefore... Used to express cause and effect.', examples: [
-                    { chinese: '因为下雨，所以我没去。', pinyin: 'Yīnwèi xià yǔ, suǒyǐ wǒ méi qù.', english: 'Because it rained, I didn\'t go.' },
-                    { chinese: '因为他生病了，所以不能来。', pinyin: 'Yīnwèi tā shēngbìng le, suǒyǐ bù néng lái.', english: 'Because he is sick, he cannot come.' }
+                { id: 'hsk2-yinwei-suoyi', pattern: '因为...所以...', explanation: '[คำอธิบายภาษาไทย: เพราะว่า...ดังนั้น... ใช้เพื่อแสดงเหตุและผล]', examples: [
+                    { chinese: '因为下雨，所以我没去。', pinyin: 'Yīnwèi xià yǔ, suǒyǐ wǒ méi qù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เพราะฝนตก ดังนั้นฉันจึงไม่ได้ไป]' },
+                    { chinese: '因为他生病了，所以不能来。', pinyin: 'Yīnwèi tā shēngbìng le, suǒyǐ bù néng lái.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เพราะเขาป่วย ดังนั้นจึงมาไม่ได้]' }
                 ]},
-                { id: 'hsk2-huozhe-haishi', pattern: '或者 / 还是', explanation: 'Both mean "or". 或者 (huòzhě) is used in statements, while 还是 (háishì) is used in questions.', examples: [
-                    { chinese: '你喜欢喝咖啡或者茶？', pinyin: 'Nǐ xǐhuān hē kāfēi huòzhě chá？', english: 'Do you like to drink coffee or tea?' },
-                    { chinese: '我们今天去商店还是去医院？', pinyin: 'Wǒmen jīntiān qù shāngdiàn háishì qù yīyuàn？', english: 'Are we going to the store or the hospital today?' }
+                { id: 'hsk2-huozhe-haishi', pattern: '或者 / 还是', explanation: '[คำอธิบายภาษาไทย: ทั้งคู่หมายถึง "หรือ" 或者 (huòzhě) ใช้ในประโยคบอกเล่า ในขณะที่ 还是 (háishì) ใช้ในประโยคคำถาม]', examples: [
+                    { chinese: '你喜欢喝咖啡或者茶？', pinyin: 'Nǐ xǐhuān hē kāfēi huòzhě chá？', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: คุณชอบดื่มกาแฟหรือชา]' },
+                    { chinese: '我们今天去商店还是去医院？', pinyin: 'Wǒmen jīntiān qù shāngdiàn háishì qù yīyuàn？', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: วันนี้เราจะไปร้านค้าหรือไปโรงพยาบาล]' }
                 ]},
             ],
             'hsk3': [
-                { id: 'hsk3-ba', pattern: '把 (bǎ) structure', explanation: 'Used to indicate that the object of the verb is disposed of or affected by the action. Structure: Subject + 把 + Object + Verb + Other elements.', examples: [
-                    { chinese: '我把书放在桌子上。', pinyin: 'Wǒ bǎ shū fàng zài zhuōzi shàng.', english: 'I put the book on the table.' },
-                    { chinese: '请把门打开。', pinyin: 'Qǐng bǎ mén dǎkāi.', english: 'Please open the door.' }
+                { id: 'hsk3-ba', pattern: '把 (bǎ) structure', explanation: '[คำอธิบายภาษาไทย: ใช้บ่งบอกว่ากรรมของกริยาถูกจัดการหรือได้รับผลกระทบจากการกระทำ โครงสร้าง: ประธาน + 把 + กรรม + กริยา + ส่วนประกอบอื่นๆ]', examples: [
+                    { chinese: '我把书放在桌子上。', pinyin: 'Wǒ bǎ shū fàng zài zhuōzi shàng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันวางหนังสือไว้บนโต๊ะ]' },
+                    { chinese: '请把门打开。', pinyin: 'Qǐng bǎ mén dǎkāi.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: กรุณาเปิดประตู]' }
                 ]},
-                { id: 'hsk3-bei', pattern: '被 (bèi) structure', explanation: 'Used to indicate a passive voice, meaning the subject is acted upon. Structure: Object + 被 + Agent (optional) + Verb + Other elements.', examples: [
-                    { chinese: '我的手机被他拿走了。', pinyin: 'Wǒ de shǒujī bèi tā ná zǒu le.', english: 'My phone was taken by him.' },
-                    { chinese: '花被风吹掉了。', pinyin: 'Huā bèi fēng chuī diào le.', english: 'The flower was blown off by the wind.' }
+                { id: 'hsk3-bei', pattern: '被 (bèi) structure', explanation: '[คำอธิบายภาษาไทย: ใช้บ่งบอกโครงสร้างประโยคกรรมวาจก หมายถึงประธานถูกกระทำ โครงสร้าง: กรรม + 被 + ผู้กระทำ (ไม่บังคับ) + กริยา + ส่วนประกอบอื่นๆ]', examples: [
+                    { chinese: '我的手机被他拿走了。', pinyin: 'Wǒ de shǒujī bèi tā ná zǒu le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: โทรศัพท์ของฉันถูกเขาเอาไปแล้ว]' },
+                    { chinese: '花被风吹掉了。', pinyin: 'Huā bèi fēng chuī diào le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ดอกไม้ถูกลมพัดปลิวไปแล้ว]' }
                 ]},
-                { id: 'hsk3-qilai', pattern: 'Verb + 起来', explanation: 'Indicates the beginning of an action or an upward movement. Can also indicate an impression or evaluation.', examples: [
-                    { chinese: '他笑起来了。', pinyin: 'Tā xiào qǐlái le.', english: 'He started laughing.' },
-                    { chinese: '这件衣服看起来很漂亮。', pinyin: 'Zhè jiàn yīfu kàn qǐlái hěn piàoliang.', english: 'This dress looks very beautiful.' }
+                { id: 'hsk3-qilai', pattern: 'Verb + 起来', explanation: '[คำอธิบายภาษาไทย: บ่งบอกการเริ่มต้นของการกระทำหรือการเคลื่อนที่ขึ้นไปข้างบน อาจบ่งบอกถึงความรู้สึกหรือการประเมินผลได้ด้วย]', examples: [
+                    { chinese: '他笑起来了。', pinyin: 'Tā xiào qǐlái le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาเริ่มหัวเราะแล้ว]' },
+                    { chinese: '这件衣服看起来很漂亮。', pinyin: 'Zhè jiàn yīfu kàn qǐlái hěn piàoliang.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เสื้อตัวนี้ดูสวยมาก]' }
                 ]},
-                { id: 'hsk3-xiaqu', pattern: 'Verb + 下去', explanation: 'Indicates the continuation of an action or a downward movement.', examples: [
-                    { chinese: '请你继续说下去。', pinyin: 'Qǐng nǐ jìxù shuō xiàqù.', english: 'Please continue speaking.' },
-                    { chinese: '雨一直下下去。', pinyin: 'Yǔ yīzhí xià xiàqù.', english: 'The rain kept falling.' }
+                { id: 'hsk3-xiaqu', pattern: 'Verb + 下去', explanation: '[คำอธิบายภาษาไทย: บ่งบอกการต่อเนื่องของการกระทำหรือการเคลื่อนที่ลงไปข้างล่าง]', examples: [
+                    { chinese: '请你继续说下去。', pinyin: 'Qǐng nǐ jìxù shuō xiàqù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: กรุณาพูดต่อไป]' },
+                    { chinese: '雨一直下下去。', pinyin: 'Yǔ yīzhí xià xiàqù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฝนตกต่อเนื่อง]' }
                 ]},
-                { id: 'hsk3-resultative', pattern: 'Verb + Resultative Complement', explanation: 'Resultative complements describe the result of an action. Common ones include 完 (wán - finished), 好 (hǎo - done well), 懂 (dǒng - understood), 见 (jiàn - seen).', examples: [
-                    { chinese: '我吃完饭了。', pinyin: 'Wǒ chī wán fàn le.', english: 'I finished eating.' },
-                    { chinese: '你看懂这本书了吗？', pinyin: 'Nǐ kàn dǒng zhè běn shū le ma?', english: 'Did you understand this book after reading it?' }
+                { id: 'hsk3-resultative', pattern: 'Verb + Resultative Complement', explanation: '[คำอธิบายภาษาไทย: คำเสริมบอกผลลัพธ์ อธิบายผลลัพธ์ของการกระทำ คำที่พบบ่อยได้แก่ 完 (wán - เสร็จ), 好 (hǎo - ทำดี), 懂 (dǒng - เข้าใจ), 见 (jiàn - เห็น)]', examples: [
+                    { chinese: '我吃完饭了。', pinyin: 'Wǒ chī wán fàn le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันกินข้าวเสร็จแล้ว]' },
+                    { chinese: '你看懂这本书了吗？', pinyin: 'Nǐ kàn dǒng zhè běn shū le ma?', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: คุณอ่านหนังสือเล่มนี้เข้าใจไหม]' }
                 ]},
-                { id: 'hsk3-chulai', pattern: 'Verb + 出来', explanation: 'Indicates emergence, separation, or recognition/discernment.', examples: [
-                    { chinese: '他从房间里走出来了。', pinyin: 'Tā cóng fángjiān lǐ zǒu chūlái le.', english: 'He walked out of the room.' },
-                    { chinese: '我听出来他的声音了。', pinyin: 'Wǒ tīng chūlái tā de shēngyīn le.', english: 'I recognized his voice (by listening).' }
+                { id: 'hsk3-chulai', pattern: 'Verb + 出来', explanation: '[คำอธิบายภาษาไทย: บ่งบอกการปรากฏ การแยกออก หรือการจดจำ/แยกแยะ]', examples: [
+                    { chinese: '他从房间里走出来了。', pinyin: 'Tā cóng fángjiān lǐ zǒu chūlái le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาเดินออกมาจากห้องแล้ว]' },
+                    { chinese: '我听出来他的声音了。', pinyin: 'Wǒ tīng chūlái tā de shēngyīn le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันฟังออกว่านั่นคือเสียงของเขา]' }
                 ]},
-                { id: 'hsk3-direction', pattern: 'Directional Complements (Simple)', explanation: 'Used after a verb to indicate the direction of the action (e.g., 进去 - go in, 出来 - come out, 上去 - go up, 下来 - come down).', examples: [
-                    { chinese: '请进房间来。', pinyin: 'Qǐng jìn fángjiān lái.', english: 'Please come into the room.' },
-                    { chinese: '他跑上去了。', pinyin: 'Tā pǎo shàngqù le.', english: 'He ran up.' }
+                { id: 'hsk3-direction', pattern: 'Directional Complements (Simple)', explanation: '[คำอธิบายภาษาไทย: คำเสริมบอกทิศทาง ใช้หลังคำกริยาเพื่อบ่งบอกทิศทางการกระทำ (เช่น 进去 - เข้าไป, 出来 - ออกมา, 上去 - ขึ้นไป, 下来 - ลงมา)]', examples: [
+                    { chinese: '请进房间来。', pinyin: 'Qǐng jìn fángjiān lái.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: กรุณาเข้ามาในห้อง]' },
+                    { chinese: '他跑上去了。', pinyin: 'Tā pǎo shàngqù le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาวิ่งขึ้นไปแล้ว]' }
                 ]},
-                { id: 'hsk3-yuelaiyue', pattern: '越来越...', explanation: 'More and more... Indicates a progressive change.', examples: [
-                    { chinese: '他越来越喜欢汉语了。', pinyin: 'Tā yuè lái yuè xǐhuān Hànyǔ le.', english: 'He likes Chinese more and more.' },
-                    { chinese: '天气越来越冷了。', pinyin: 'Tiānqì yuè lái yuè lěng le.', english: 'The weather is getting colder and colder.' }
+                { id: 'hsk3-yuelaiyue', pattern: '越来越...', explanation: '[คำอธิบายภาษาไทย: มากขึ้นเรื่อยๆ... บ่งบอกการเปลี่ยนแปลงที่ก้าวหน้า]', examples: [
+                    { chinese: '他越来越喜欢汉语了。', pinyin: 'Tā yuè lái yuè xǐhuān Hànyǔ le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาชอบภาษาจีนมากขึ้นเรื่อยๆ]' },
+                    { chinese: '天气越来越冷了。', pinyin: 'Tiānqì yuè lái yuè lěng le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: อากาศหนาวขึ้นเรื่อยๆ]' }
                 ]},
-                { id: 'hsk3-chule-yiwai', pattern: '除了...以外, 都/也...', explanation: 'Besides...all/also... Used to indicate an exception or inclusion.', examples: [
-                    { chinese: '除了他以外，我们都来了。', pinyin: 'Chúle tā yǐwài, wǒmen dōu lái le.', english: 'Besides him, all of us came.' },
-                    { chinese: '除了英语，他还会说汉语。', pinyin: 'Chúle Yīngyǔ, tā hái huì shuō Hànyǔ.', english: 'Besides English, he can also speak Chinese.' }
+                { id: 'hsk3-chule-yiwai', pattern: '除了...以外, 都/也...', explanation: '[คำอธิบายภาษาไทย: นอกจาก...แล้ว, ทั้งหมด/ก็... ใช้เพื่อบ่งบอกข้อยกเว้นหรือการรวม]', examples: [
+                    { chinese: '除了他以外，我们都来了。', pinyin: 'Chúle tā yǐwài, wǒmen dōu lái le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: นอกจากเขาแล้ว พวกเรามากันหมด]' },
+                    { chinese: '除了英语，他还会说汉语。', pinyin: 'Chúle Yīngyǔ, tā hái huì shuō Hànyǔ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: นอกจากภาษาอังกฤษแล้ว เขายังพูดภาษาจีนได้ด้วย]' }
                 ]},
-                { id: 'hsk3-bujin-erqie', pattern: '不仅...而且...', explanation: 'Not only...but also... Used to connect two related clauses, emphasizing the second one.', examples: [
-                    { chinese: '他不仅会说汉语，而且说得很好。', pinyin: 'Tā bùjǐn huì shuō Hànyǔ, érqiě shuō de hěn hǎo.', english: 'Not only can he speak Chinese, but he also speaks it very well.' },
-                    { chinese: '这个地方不仅漂亮，而且很安静。', pinyin: 'Zhège dìfang bùjǐn piàoliang, érqiě hěn ānjìng.', english: 'This place is not only beautiful, but also very quiet.' }
+                { id: 'hsk3-bujin-erqie', pattern: '不仅...而且...', explanation: '[คำอธิบายภาษาไทย: ไม่เพียงแต่...แต่ยัง... ใช้เชื่อมอนุประโยคที่เกี่ยวข้องกันสองประโยค โดยเน้นประโยคหลัง]', examples: [
+                    { chinese: '他不仅会说汉语，而且说得很好。', pinyin: 'Tā bùjǐn huì shuō Hànyǔ, érqiě shuō de hěn hǎo.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาไม่เพียงแต่พูดภาษาจีนได้ แต่ยังพูดได้ดีมากด้วย]' },
+                    { chinese: '这个地方不仅漂亮，而且很安静。', pinyin: 'Zhège dìfang bùjǐn piàoliang, érqiě hěn ānjìng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: สถานที่นี้ไม่เพียงแต่สวยงาม แต่ยังเงียบสงบอีกด้วย]' }
                 ]},
-                { id: 'hsk3-zhiyao-jiu', pattern: '只要...就...', explanation: 'As long as...then... Indicates a condition that guarantees a result.', examples: [
-                    { chinese: '只要努力学习，就能考好。', pinyin: 'Zhǐyào nǔlì xuéxí, jiù néng kǎo hǎo.', english: 'As long as you study hard, you can do well on the exam.' },
-                    { chinese: '只要有时间，我就会去旅游。', pinyin: 'Zhǐyào yǒu shíjiān, wǒ jiù huì qù lǚyóu.', english: 'As long as I have time, I will go travel.' }
+                { id: 'hsk3-zhiyao-jiu', pattern: '只要...就...', explanation: '[คำอธิบายภาษาไทย: ตราบใดที่...ก็... บ่งบอกเงื่อนไขที่รับประกันผลลัพธ์]', examples: [
+                    { chinese: '只要努力学习，就能考好。', pinyin: 'Zhǐyào nǔlì xuéxí, jiù néng kǎo hǎo.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ตราบใดที่ตั้งใจเรียน ก็จะสอบได้ดี]' },
+                    { chinese: '只要有时间，我就会去旅游。', pinyin: 'Zhǐyào yǒu shíjiān, wǒ jiù huì qù lǚyóu.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ตราบใดที่มีเวลา ฉันก็จะไปเที่ยว]' }
                 ]},
-                { id: 'hsk3-zhiyou-cai', pattern: '只有...才...', explanation: 'Only if...then... Indicates a necessary condition for a result to occur.', examples: [
-                    { chinese: '只有努力，才能成功。', pinyin: 'Zhǐyǒu nǔlì, cái néng chénggōng.', english: 'Only through effort can one succeed.' },
-                    { chinese: '只有你告诉我，我才能知道。', pinyin: 'Zhǐyǒu nǐ gàosù wǒ, wǒ cái néng zhīdào.', english: 'Only if you tell me, will I know.' }
+                { id: 'hsk3-zhiyou-cai', pattern: '只有...才...', explanation: '[คำอธิบายภาษาไทย: เพียงแค่...ถึงจะ... บ่งบอกเงื่อนไขที่จำเป็นเพื่อให้เกิดผลลัพธ์]', examples: [
+                    { chinese: '只有努力，才能成功。', pinyin: 'Zhǐyǒu nǔlì, cái néng chénggōng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เพียงแค่พยายาม ถึงจะประสบความสำเร็จ]' },
+                    { chinese: '只有你告诉我，我才能知道。', pinyin: 'Zhǐyǒu nǐ gàosù wǒ, wǒ cái néng zhīdào.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เพียงแค่คุณบอกฉัน ฉันถึงจะรู้]' }
                 ]},
-                { id: 'hsk3-wulun-dou-ye', pattern: '无论...都/也...', explanation: 'No matter (what/how/who)...all/also... Indicates that a result remains the same regardless of the condition.', examples: [
-                    { chinese: '无论天气怎么样，我都要去。', pinyin: 'Wúlùn tiānqì zěnmeyàng, wǒ dōu yào qù.', english: 'No matter what the weather is like, I will go.' },
-                    { chinese: '无论多忙，他也会给我打电话。', pinyin: 'Wúlùn duō máng, tā yě huì gěi wǒ dǎ diànhuà.', english: 'No matter how busy he is, he will also call me.' }
+                { id: 'hsk3-wulun-dou-ye', pattern: '无论...都/也...', explanation: '[คำอธิบายภาษาไทย: ไม่ว่า...ก็/ก็ยัง... บ่งบอกว่าผลลัพธ์ยังคงเหมือนเดิมไม่ว่าเงื่อนไขจะเป็นอย่างไร]', examples: [
+                    { chinese: '无论天气怎么样，我都要去。', pinyin: 'Wúlùn tiānqì zěnmeyàng, wǒ dōu yào qù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ไม่ว่าอากาศจะเป็นอย่างไร ฉันก็ยังจะไป]' },
+                    { chinese: '无论多忙，他也会给我打电话。', pinyin: 'Wúlùn duō máng, tā yě huì gěi wǒ dǎ diànhuà.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ไม่ว่าจะยุ่งแค่ไหน เขาก็จะโทรหาฉัน]' }
                 ]},
-                { id: 'hsk3-shide', pattern: '是...的', explanation: 'Emphatic structure. Used to emphasize the time, place, manner, or agent of a past action.', examples: [
-                    { chinese: '我是昨天来的。', pinyin: 'Wǒ shì zuótiān lái de.', english: 'I came yesterday (emphasizing "yesterday").' },
-                    { chinese: '他是在北京学的汉语。', pinyin: 'Tā shì zài Běijīng xué de Hànyǔ.', english: 'He learned Chinese in Beijing (emphasizing "in Beijing").' }
+                { id: 'hsk3-shide', pattern: '是...的', explanation: '[คำอธิบายภาษาไทย: โครงสร้างเน้นย้ำ ใช้เพื่อเน้นเวลา สถานที่ ลักษณะ หรือผู้กระทำของการกระทำในอดีต]', examples: [
+                    { chinese: '我是昨天来的。', pinyin: 'Wǒ shì zuótiān lái de.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันมาเมื่อวาน (เน้น "เมื่อวาน")]' },
+                    { chinese: '他是在北京学的汉语。', pinyin: 'Tā shì zài Běijīng xué de Hànyǔ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาเรียนภาษาจีนที่ปักกิ่ง (เน้น "ที่ปักกิ่ง")]' }
                 ]},
-                { id: 'hsk3-lian-dou-ye', pattern: '连...都/也...', explanation: 'Even... Used to emphasize an extreme case, meaning "even [something extreme] is true, so other things are also true".', examples: [
-                    { chinese: '他连饭都没吃。', pinyin: 'Tā lián fàn dōu méi chī.', english: 'He didn\'t even eat food.' },
-                    { chinese: '这么简单的问题，连孩子也知道。', pinyin: 'Zhème jiǎndān de wèntí, lián háizi yě zhīdào.', english: 'Even a child knows such a simple question.' }
+                { id: 'hsk3-lian-dou-ye', pattern: '连...都/也...', explanation: '[คำอธิบายภาษาไทย: แม้แต่...ก็/ก็ยัง... ใช้เพื่อเน้นกรณีที่รุนแรง หมายถึง "แม้แต่ [สิ่งที่รุนแรง] ก็เป็นจริง ดังนั้นสิ่งอื่นๆ ก็เป็นจริงด้วย"]', examples: [
+                    { chinese: '他连饭都没吃。', pinyin: 'Tā lián fàn dōu méi chī.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขายังไม่ได้กินข้าวเลย]' },
+                    { chinese: '这么简单的问题，连孩子也知道。', pinyin: 'Zhème jiǎndān de wèntí, lián háizi yě zhīdào。', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ปัญหาที่ง่ายขนาดนี้ แม้แต่เด็กก็ยังรู้]' }
                 ]},
-                { id: 'hsk3-dui-ganxingqu', pattern: '对...感兴趣', explanation: 'Interested in... Used to express interest in something.', examples: [
-                    { chinese: '我对中国文化很感兴趣。', pinyin: 'Wǒ duì Zhōngguó wénhuà hěn gǎnxìngqù.', english: 'I am very interested in Chinese culture.' },
-                    { chinese: '她对学汉语不感兴趣。', pinyin: 'Tā duì xué Hànyǔ bù gǎnxìngqù.', english: 'She is not interested in learning Chinese.' }
+                { id: 'hsk3-dui-ganxingqu', pattern: '对...感兴趣', explanation: '[คำอธิบายภาษาไทย: สนใจ... ใช้เพื่อแสดงความสนใจในบางสิ่งบางอย่าง]', examples: [
+                    { chinese: '我对中国文化很感兴趣。', pinyin: 'Wǒ duì Zhōngguó wénhuà hěn gǎnxìngqù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันสนใจวัฒนธรรมจีนมาก]' },
+                    { chinese: '她对学汉语不感兴趣。', pinyin: 'Tā duì xué Hànyǔ bù gǎnxìngqù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เธอไม่สนใจการเรียนภาษาจีน]' }
                 ]},
-                { id: 'hsk3-guanyu', pattern: '关于', explanation: 'About; concerning. Used before a noun or pronoun to introduce the topic.', examples: [
-                    { chinese: '这本书是关于历史的。', pinyin: 'Zhè běn shū shì guānyú lìshǐ de.', english: 'This book is about history.' },
-                    { chinese: '我们谈论了关于未来的计划。', pinyin: 'Wǒmen tánlùn le guānyú wèilái de jìhuà.', english: 'We discussed plans about the future.' }
+                { id: 'hsk3-guanyu', pattern: '关于', explanation: '[คำอธิบายภาษาไทย: เกี่ยวกับ; เกี่ยวข้องกับ ใช้หน้าคำนามหรือคำสรรพนามเพื่อแนะนำหัวข้อ]', examples: [
+                    { chinese: '这本书是关于历史的。', pinyin: 'Zhè běn shū shì guānyú lìshǐ de.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: หนังสือเล่มนี้เกี่ยวกับประวัติศาสตร์]' },
+                    { chinese: '我们谈论了关于未来的计划。', pinyin: 'Wǒmen tánlùn le guānyú wèilái de jìhuà.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: พวกเราพูดคุยเกี่ยวกับแผนการในอนาคต]' }
                 ]},
             ],
             'hsk4': [
-                { id: 'hsk4-guolai-guoqu', pattern: 'Verb + 过来 / 过去 (Figurative)', explanation: 'Directional complements used figuratively to indicate a change of state, recovery, or ability to manage. 过来 (guòlái) often means "to come around, to recover", 过去 (guòqù) often means "to go over, to pass".', examples: [
-                    { chinese: '他终于醒过来了。', pinyin: 'Tā zhōngyú xǐng guòlái le.', english: 'He finally woke up (came to).' },
-                    { chinese: '这个问题我还没想过去。', pinyin: 'Zhège wèntí wǒ hái méi xiǎng guòqù.', english: 'I haven\'t thought this problem through yet.' }
+                { id: 'hsk4-guolai-guoqu', pattern: 'Verb + 过来 / 过去 (Figurative)', explanation: '[คำอธิบายภาษาไทย: คำเสริมบอกทิศทางที่ใช้ในเชิงเปรียบเทียบเพื่อบ่งบอกการเปลี่ยนแปลงสถานะ การฟื้นตัว หรือความสามารถในการจัดการ 过来 (guòlái) มักหมายถึง "กลับมา, ฟื้นตัว", 过去 (guòqù) มักหมายถึง "ผ่านไป, ผ่านพ้นไป"]', examples: [
+                    { chinese: '他终于醒过来了。', pinyin: 'Tā zhōngyú xǐng guòlái le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ในที่สุดเขาก็ตื่นขึ้นมา]' },
+                    { chinese: '这个问题我还没想过去。', pinyin: 'Zhège wèntí wǒ hái méi xiǎng guòqù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ปัญหานี้ฉันยังคิดไม่ตก]' }
                 ]},
-                { id: 'hsk4-diao', pattern: 'Verb + 掉', explanation: 'Indicates removal, completion, or getting rid of something.', examples: [
-                    { chinese: '他把旧衣服扔掉了。', pinyin: 'Tā bǎ jiù yīfu rēng diào le.', english: 'He threw away the old clothes.' },
-                    { chinese: '我的手机丢掉了。', pinyin: 'Wǒ de shǒujī diū diào le.', english: 'My phone is lost.' }
+                { id: 'hsk4-diao', pattern: 'Verb + 掉', explanation: '[คำอธิบายภาษาไทย: บ่งบอกการกำจัด การเสร็จสิ้น หรือการทิ้งบางสิ่งบางอย่าง]', examples: [
+                    { chinese: '他把旧衣服扔掉了。', pinyin: 'Tā bǎ jiù yīfu rēng diào le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาโยนเสื้อผ้าเก่าทิ้งไปแล้ว]' },
+                    { chinese: '我的手机丢掉了。', pinyin: 'Wǒ de shǒujī diū diào le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: โทรศัพท์ของฉันหายไปแล้ว]' }
                 ]},
-                { id: 'hsk4-zhu', pattern: 'Verb + 住', explanation: 'Indicates firmness, stability, or successful stopping/holding.', examples: [
-                    { chinese: '请你站住！', pinyin: 'Qǐng nǐ zhànzhù!', english: 'Please stop! (Stand still!)' },
-                    { chinese: '我记住了他的名字。', pinyin: 'Wǒ jì zhù le tā de míngzi.', english: 'I remembered his name.' }
+                { id: 'hsk4-zhu', pattern: 'Verb + 住', explanation: '[คำอธิบายภาษาไทย: บ่งบอกความมั่นคง เสถียรภาพ หรือการหยุด/ยึดจับได้สำเร็จ]', examples: [
+                    { chinese: '请你站住！', pinyin: 'Qǐng nǐ zhànzhù!', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: กรุณาหยุด! (ยืนนิ่งๆ!)]' },
+                    { chinese: '我记住了他的名字。', pinyin: 'Wǒ jì zhù le tā de míngzi.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันจำชื่อเขาได้แล้ว]' }
                 ]},
-                { id: 'hsk4-qilai-evaluation', pattern: 'Verb + 起来 (Evaluation)', explanation: 'Used to give an impression or evaluation based on perception. Similar to "it seems that..." or "it looks/sounds/feels...".', examples: [
-                    { chinese: '这首歌听起来很好听。', pinyin: 'Zhè shǒu gē tīng qǐlái hěn hǎotīng.', english: 'This song sounds very good.' },
-                    { chinese: '他看起来很累。', pinyin: 'Tā kàn qǐlái hěn lèi.', english: 'He looks very tired.' }
+                { id: 'hsk4-qilai-evaluation', pattern: 'Verb + 起来 (Evaluation)', explanation: '[คำอธิบายภาษาไทย: ใช้เพื่อแสดงความรู้สึกหรือการประเมินจากสิ่งที่รับรู้ คล้ายกับ "ดูเหมือนว่า..." หรือ "ดู/ฟัง/รู้สึก..."]', examples: [
+                    { chinese: '这首歌听起来很好听。', pinyin: 'Zhè shǒu gē tīng qǐlái hěn hǎotīng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เพลงนี้ฟังดูเพราะมาก]' },
+                    { chinese: '他看起来很累。', pinyin: 'Tā kàn qǐlái hěn lèi.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาดูเหนื่อยมาก]' }
                 ]},
-                { id: 'hsk4-de-bu-potential', pattern: 'Verb + 得/不 + Complement (Potential)', explanation: 'Indicates whether an action is possible or impossible to achieve a certain result. 得 (de) for possible, 不 (bù) for impossible.', examples: [
-                    { chinese: '这个字我写得出来。', pinyin: 'Zhège zì wǒ xiě de chūlái.', english: 'I can write this character (successfully).' },
-                    { chinese: '饭太多了，我吃不完。', pinyin: 'Fàn tài duō le, wǒ chī bu wán.', english: 'There\'s too much food, I can\'t finish eating it.' }
+                { id: 'hsk4-de-bu-potential', pattern: 'Verb + 得/不 + Complement (Potential)', explanation: '[คำอธิบายภาษาไทย: บ่งบอกว่าการกระทำนั้นเป็นไปได้หรือไม่ที่จะบรรลุผลลัพธ์บางอย่าง 得 (de) สำหรับความเป็นไปได้, 不 (bù) สำหรับความเป็นไปไม่ได้]', examples: [
+                    { chinese: '这个字我写得出来。', pinyin: 'Zhège zì wǒ xiě de chūlái.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ตัวอักษรนี้ฉันเขียนได้ (สำเร็จ)]' },
+                    { chinese: '饭太多了，我吃不完。', pinyin: 'Fàn tài duō le, wǒ chī bu wán.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ข้าวเยอะเกินไป ฉันกินไม่หมด]' }
                 ]},
-                { id: 'hsk4-bian', pattern: 'Verb + 遍', explanation: 'Indicates the completion of an action from beginning to end, covering all parts or instances.', examples: [
-                    { chinese: '我把这本书看了一遍。', pinyin: 'Wǒ bǎ zhè běn shū kàn le yī biàn.', english: 'I read this book once (from beginning to end).' },
-                    { chinese: '请你再说一遍。', pinyin: 'Qǐng nǐ zài shuō yī biàn.', english: 'Please say it again (the whole thing).' }
+                { id: 'hsk4-bian', pattern: 'Verb + 遍', explanation: '[คำอธิบายภาษาไทย: บ่งบอกการเสร็จสิ้นของการกระทำตั้งแต่ต้นจนจบ ครอบคลุมทุกส่วนหรือทุกครั้ง]', examples: [
+                    { chinese: '我把这本书看了一遍。', pinyin: 'Wǒ bǎ zhè běn shū kàn le yī biàn.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันอ่านหนังสือเล่มนี้จบไปหนึ่งรอบ]' },
+                    { chinese: '请你再说一遍。', pinyin: 'Qǐng nǐ zài shuō yī biàn.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: กรุณาพูดอีกครั้ง (ทั้งประโยค)]' }
                 ]},
-                { id: 'hsk4-duibulaisuo', pattern: 'A 对 B 来说', explanation: 'As far as A is concerned for B; for A, from B\'s perspective. Used to introduce a point of view.', examples: [
-                    { chinese: '对我来说，学汉语很有趣。', pinyin: 'Duì wǒ lái shuō, xué Hànyǔ hěn yǒuqù.', english: 'For me, learning Chinese is very interesting.' },
-                    { chinese: '对学生来说，考试很重要。', pinyin: 'Duì xuéshēng lái shuō, kǎoshì hěn zhòngyào.', english: 'For students, exams are very important.' }
+                { id: 'hsk4-duibulaisuo', pattern: 'A 对 B 来说', explanation: '[คำอธิบายภาษาไทย: สำหรับ A ในมุมมองของ B; สำหรับ A, จากมุมมองของ B ใช้เพื่อแนะนำมุมมอง]', examples: [
+                    { chinese: '对我来说，学汉语很有趣。', pinyin: 'Duì wǒ lái shuō, xué Hànyǔ hěn yǒuqù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: สำหรับฉัน การเรียนภาษาจีนน่าสนใจมาก]' },
+                    { chinese: '对学生来说，考试很重要。', pinyin: 'Duì xuéshēng lái shuō, kǎoshì hěn zhòngyào.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: สำหรับนักเรียน การสอบสำคัญมาก]' }
                 ]},
-                { id: 'hsk4-jiran-jiu', pattern: '既然...就...', explanation: 'Since...then... Used to indicate that since a certain situation exists, a certain action or result should follow.', examples: [
-                    { chinese: '既然你来了，就多玩一会儿吧。', pinyin: 'Jìrán nǐ lái le, jiù duō wán yīhuìr ba.', english: 'Since you\'ve come, stay and play for a while longer.' },
-                    { chinese: '既然决定了，就不要后悔。', pinyin: 'Jìrán juédìng le, jiù bùyào hòuhuǐ.', english: 'Since you\'ve decided, don\'t regret it.' }
+                { id: 'hsk4-jiran-jiu', pattern: '既然...就...', explanation: '[คำอธิบายภาษาไทย: ในเมื่อ...ก็... ใช้เพื่อบ่งบอกว่าเมื่อสถานการณ์บางอย่างมีอยู่ การกระทำหรือผลลัพธ์บางอย่างควรตามมา]', examples: [
+                    { chinese: '既然你来了，就多玩一会儿吧。', pinyin: 'Jìrán nǐ lái le, jiù duō wán yīhuìr ba.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ในเมื่อคุณมาแล้ว ก็เล่นต่ออีกหน่อยเถอะ]' },
+                    { chinese: '既然决定了，就不要后悔。', pinyin: 'Jìrán juédìng le, jiù bùyào hòuhuǐ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ในเมื่อตัดสินใจแล้ว ก็อย่าเสียใจเลย]' }
                 ]},
-                { id: 'hsk4-fouze', pattern: '否则', explanation: 'Otherwise; if not. Used to introduce a consequence if the preceding condition is not met.', examples: [
-                    { chinese: '你必须努力学习，否则会挂科。', pinyin: 'Nǐ bìxū nǔlì xuéxí, fǒuzé huì guàkē.', english: 'You must study hard, otherwise you will fail the course.' },
-                    { chinese: '快点走，否则会迟到。', pinyin: 'Kuài diǎn zǒu, fǒuzé huì chídào.', english: 'Walk faster, otherwise you\'ll be late.' }
+                { id: 'hsk4-fouze', pattern: '否则', explanation: '[คำอธิบายภาษาไทย: มิฉะนั้น; ถ้าไม่ ใช้เพื่อแนะนำผลที่ตามมาหากเงื่อนไขก่อนหน้าไม่เป็นไปตามนั้น]', examples: [
+                    { chinese: '你必须努力学习，否则会挂科。', pinyin: 'Nǐ bìxū nǔlì xuéxí, fǒuzé huì guàkē.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: คุณต้องตั้งใจเรียน มิฉะนั้นจะสอบตก]' },
+                    { chinese: '快点走，否则会迟到。', pinyin: 'Kuài diǎn zǒu, fǒuzé huì chídào.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: รีบไปหน่อย มิฉะนั้นจะสาย]' }
                 ]},
-                { id: 'hsk4-tongguo', pattern: '通过', explanation: 'Through; by means of; to pass (a test).', examples: [
-                    { chinese: '通过努力，他成功了。', pinyin: 'Tōngguò nǔlì, tā chénggōng le.', english: 'Through effort, he succeeded.' },
-                    { chinese: '他通过了考试。', pinyin: 'Tā tōngguò le kǎoshì.', english: 'He passed the exam.' }
+                { id: 'hsk4-tongguo', pattern: '通过', explanation: '[คำอธิบายภาษาไทย: ผ่าน; โดยวิธีการ; ผ่าน (การทดสอบ)]', examples: [
+                    { chinese: '通过努力，他成功了。', pinyin: 'Tōngguò nǔlì, tā chénggōng le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ด้วยความพยายาม เขาประสบความสำเร็จ]' },
+                    { chinese: '他通过了考试。', pinyin: 'Tā tōngguò le kǎoshì.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาผ่านการสอบแล้ว]' }
                 ]},
-                { id: 'hsk4-youyu', pattern: '由于', explanation: 'Due to; because of. Used to state the reason or cause for something, often followed by a consequence.', examples: [
-                    { chinese: '由于下雨，比赛取消了。', pinyin: 'Yóuyú xià yǔ, bǐsài qǔxiāo le.', english: 'Due to the rain, the match was canceled.' },
-                    { chinese: '由于工作忙，他没有时间休息。', pinyin: 'Yóuyú gōngzuò máng, tā méiyǒu shíjiān xiūxi.', english: 'Because he is busy with work, he has no time to rest.' }
+                { id: 'hsk4-youyu', pattern: '由于', explanation: '[คำอธิบายภาษาไทย: เนื่องจาก; เพราะว่า ใช้เพื่อระบุเหตุผลหรือสาเหตุของบางสิ่งบางอย่าง มักตามด้วยผลที่ตามมา]', examples: [
+                    { chinese: '由于下雨，比赛取消了。', pinyin: 'Yóuyú xià yǔ, bǐsài qǔxiāo le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เนื่องด้วยฝนตก การแข่งขันจึงถูกยกเลิก]' },
+                    { chinese: '由于工作忙，他没有时间休息。', pinyin: 'Yóuyú gōngzuò máng, tā méiyǒu shíjiān xiūxi.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เนื่องจากงานยุ่ง เขาจึงไม่มีเวลาพักผ่อน]' }
                 ]},
-                { id: 'hsk4-conger', pattern: '从而', explanation: 'Thus; thereby. Used to introduce a result or consequence of the preceding action or situation.', examples: [
-                    { chinese: '他努力学习，从而取得了进步。', pinyin: 'Tā nǔlì xuéxí, cóng\'ér qǔdé le jìnbù.', english: 'He studied hard, thereby making progress.' },
-                    { chinese: '增加收入，从而提高生活水平。', pinyin: 'Zēngjiā shōurù, cóng\'ér tígāo shēnghuó shuǐpíng.', english: 'Increase income, thereby improving living standards.' }
+                { id: 'hsk4-conger', pattern: '从而', explanation: '[คำอธิบายภาษาไทย: ดังนั้น; ด้วยเหตุนี้ ใช้เพื่อแนะนำผลลัพธ์หรือผลที่ตามมาของการกระทำหรือสถานการณ์ก่อนหน้า]', examples: [
+                    { chinese: '他努力学习，从而取得了进步。', pinyin: 'Tā nǔlì xuéxí, cóng\'ér qǔdé le jìnbù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาตั้งใจเรียน ดังนั้นจึงมีความก้าวหน้า]' },
+                    { chinese: '增加收入，从而提高生活水平。', pinyin: 'Zēngjiā shōurù, cóng\'ér tígāo shēnghuó shuǐpíng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เพิ่มรายได้ ดังนั้นจึงยกระดับคุณภาพชีวิต]' }
                 ]},
-                { id: 'hsk4-zhiyu', pattern: '至于', explanation: 'As for; as to. Used to introduce another topic or to shift focus.', examples: [
-                    { chinese: '我喜欢旅游，至于去哪儿，还没决定。', pinyin: 'Wǒ xǐhuān lǚyóu, zhìyú qù nǎr, hái méi juédìng.', english: 'I like traveling. As for where to go, I haven\'t decided yet.' },
-                    { chinese: '他已经很努力了，至于结果，就看运气吧。', pinyin: 'Tā yǐjīng hěn nǔlì le, zhìyú jiéguǒ, jiù kàn yùnqì ba.', english: 'He has already worked very hard. As for the result, it depends on luck.' }
+                { id: 'hsk4-zhiyu', pattern: '至于', explanation: '[คำอธิบายภาษาไทย: ส่วน; สำหรับ ใช้เพื่อแนะนำหัวข้ออื่นหรือเปลี่ยนประเด็น]', examples: [
+                    { chinese: '我喜欢旅游，至于去哪儿，还没决定。', pinyin: 'Wǒ xǐhuān lǚyóu, zhìyú qù nǎr, hái méi juédìng.', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: ฉันชอบท่องเที่ยว ส่วนจะไปไหน ยังไม่ได้ตัดสินใจ]' },
+                    { chinese: '他已经很努力了，至于结果，就看运气吧。', pinyin: 'Tā yǐjīng hěn nǔlì le, zhìyú jiéguǒ, jiù kàn yùnqì ba.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาพยายามมากแล้ว ส่วนผลลัพธ์ ก็ขึ้นอยู่กับโชคเถอะ]' }
                 ]},
-                { id: 'hsk4-yibian', pattern: '以便', explanation: 'So that; in order to. Used to indicate purpose.', examples: [
-                    { chinese: '请把门关上，以便保持安静。', pinyin: 'Qǐng bǎ mén guānshàng, yǐbiàn bǎochí ānjìng.', english: 'Please close the door so that it can stay quiet.' },
-                    { chinese: '我早点起床，以便赶上火车。', pinyin: 'Wǒ zǎodiǎn qǐchuáng, yǐbiàn gǎnshàng huǒchē.', english: 'I got up early in order to catch the train.' }
+                { id: 'hsk4-yibian', pattern: '以便', explanation: '[คำอธิบายภาษาไทย: เพื่อให้; เพื่อที่จะ ใช้เพื่อบ่งบอกวัตถุประสงค์]', examples: [
+                    { chinese: '请把门关上，以便保持安静。', pinyin: 'Qǐng bǎ mén guānshàng, yǐbiàn bǎochí ānjìng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: กรุณาปิดประตู เพื่อให้เงียบสงบ]' },
+                    { chinese: '我早点起床，以便赶上火车。', pinyin: 'Wǒ zǎodiǎn qǐchuáng, yǐbiàn gǎnshàng huǒchē.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันตื่นเช้า เพื่อให้ทันรถไฟ]' }
                 ]},
-                { id: 'hsk4-chufei-fouze', pattern: '除非...否则...', explanation: 'Unless...otherwise... Used to state a condition that must be met, or else a negative consequence will follow.', examples: [
-                    { chinese: '除非你告诉我，否则我不会知道。', pinyin: 'Chúfēi nǐ gàosù wǒ, fǒuzé wǒ bù huì zhīdào.', english: 'Unless you tell me, I won\'t know.' },
-                    { chinese: '除非下雨，否则我们明天去公园。', pinyin: 'Chúfēi xià yǔ, fǒuzé wǒmen míngtiān qù gōngyuán.', english: 'Unless it rains, we will go to the park tomorrow.' }
+                { id: 'hsk4-chufei-fouze', pattern: '除非...否则...', explanation: '[คำอธิบายภาษาไทย: เว้นแต่...มิฉะนั้น... ใช้เพื่อระบุเงื่อนไขที่ต้องเป็นไปตามนั้น มิฉะนั้นจะเกิดผลลัพธ์เชิงลบตามมา]', examples: [
+                    { chinese: '除非你告诉我，否则我不会知道。', pinyin: 'Chúfēi nǐ gàosù wǒ, fǒuzé wǒ bù huì zhīdào.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เว้นแต่คุณจะบอกฉัน มิฉะนั้นฉันจะไม่รู้]' },
+                    { chinese: '除非下雨，否则我们明天去公园。', pinyin: 'Chúfēi xià yǔ, fǒuzé wǒmen míngtiān qù gōngyuán.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เว้นแต่ฝนตก มิฉะนั้นพรุ่งนี้เราจะไปสวนสาธารณะ]' }
                 ]},
-                { id: 'hsk4-jiujing', pattern: '究竟', explanation: 'After all; in the end; exactly. Used in questions to get to the bottom of something or to emphasize the question.', examples: [
-                    { chinese: '你究竟想说什么？', pinyin: 'Nǐ jiūjìng xiǎng shuō shénme？', english: 'What exactly do you want to say?' },
-                    { chinese: '这件事究竟是谁做的？', pinyin: 'Zhè jiàn shì jiūjìng shì shéi zuò de？', english: 'Who actually did this?' }
+                { id: 'hsk4-jiujing', pattern: '究竟', explanation: '[คำอธิบายภาษาไทย: ท้ายที่สุด; ในที่สุด; แท้จริงแล้ว ใช้ในคำถามเพื่อหาข้อสรุปหรือเน้นคำถาม]', examples: [
+                    { chinese: '你究竟想说什么？', pinyin: 'Nǐ jiūjìng xiǎng shuō shénme？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: คุณต้องการจะพูดอะไรกันแน่]' },
+                    { chinese: '这件事究竟是谁做的？', pinyin: 'Zhè jiàn shì jiūjìng shì shéi zuò de？', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เรื่องนี้ใครเป็นคนทำกันแน่]' }
                 ]},
-                { id: 'hsk4-guoran', pattern: '果然', explanation: 'As expected; sure enough. Indicates that something happened as predicted or anticipated.', examples: [
-                    { chinese: '他果然来了。', pinyin: 'Tā guǒrán lái le.', english: 'He came as expected.' },
-                    { chinese: '天气预报说今天有雨，果然下雨了。', pinyin: 'Tiānqì yùbào shuō jīntiān yǒu yǔ, guǒrán xià yǔ le.', english: 'The weather forecast said it would rain today, and sure enough, it rained.' }
+                { id: 'hsk4-guoran', pattern: '果然', explanation: '[คำอธิบายภาษาไทย: เป็นไปตามคาด; จริงๆ ด้วย บ่งบอกว่าบางสิ่งเกิดขึ้นตามที่คาดการณ์ไว้]', examples: [
+                    { chinese: '他果然来了。', pinyin: 'Tā guǒrán lái le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขามาจริงๆ ด้วย]' },
+                    { chinese: '天气预报说今天有雨，果然下雨了。', pinyin: 'Tiānqì yùbào shuō jīntiān yǒu yǔ, guǒrán xià yǔ le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: พยากรณ์อากาศบอกว่าวันนี้ฝนจะตก แล้วก็ตกจริงๆ ด้วย]' }
                 ]},
-                { id: 'hsk4-shenzhi', pattern: '甚至', explanation: 'Even; so much so that. Used to emphasize an extreme example or consequence.', examples: [
-                    { chinese: '他太忙了，甚至没有时间吃饭。', pinyin: 'Tā tài máng le, shènzhì méiyǒu shíjiān chīfàn.', english: 'He is too busy, he doesn\'t even have time to eat.' },
-                    { chinese: '这个问题很简单，甚至连孩子都知道。', pinyin: 'Zhège wèntí hěn jiǎndān, shènzhì lián háizi dōu zhīdào.', english: 'This question is very simple, even a child knows it.' }
+                { id: 'hsk4-shenzhi', pattern: '甚至', explanation: '[คำอธิบายภาษาไทย: แม้แต่; ถึงขนาดที่ว่า ใช้เพื่อเน้นตัวอย่างที่รุนแรงหรือผลที่ตามมา]', examples: [
+                    { chinese: '他太忙了，甚至没有时间吃饭。', pinyin: 'Tā tài máng le, shènzhì méiyǒu shíjiān chīfàn.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขายุ่งมาก แม้แต่เวลาจะกินข้าวก็ไม่มี]' },
+                    { chinese: '这个问题很简单，甚至连孩子都知道。', pinyin: 'Zhège wèntí hěn jiǎndān, shènzhì lián háizi dōu zhīdào。', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ปัญหาที่ง่ายขนาดนี้ แม้แต่เด็กก็ยังรู้]' }
                 ]},
-                { id: 'hsk4-xiande', pattern: '显得', explanation: 'To seem; to appear. Used to describe how something or someone appears to be.', examples: [
-                    { chinese: '他今天显得很高兴。', pinyin: 'Tā jīntiān xiǎnde hěn gāoxìng.', english: 'He seems very happy today.' },
-                    { chinese: '这件衣服显得你很瘦。', pinyin: 'Zhè jiàn yīfu xiǎnde nǐ hěn shòu.', english: 'This dress makes you look thin.' }
+                { id: 'hsk4-xiande', pattern: '显得', explanation: '[คำอธิบายภาษาไทย: ดูเหมือน; ปรากฏว่า ใช้เพื่ออธิบายว่าบางสิ่งหรือบางคนดูเป็นอย่างไร]', examples: [
+                    { chinese: '他今天显得很高兴。', pinyin: 'Tā jīntiān xiǎnde hěn gāoxìng.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: วันนี้เขาดูมีความสุขมาก]' },
+                    { chinese: '这件衣服显得你很瘦。', pinyin: 'Zhè jiàn yīfu xiǎnde nǐ hěn shòu.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เสื้อตัวนี้ทำให้คุณดูผอม]' }
                 ]},
-                { id: 'hsk4-xingkui', pattern: '幸亏', explanation: 'Fortunately; luckily. Used to express gratitude for a fortunate outcome.', examples: [
-                    { chinese: '幸亏你提醒我，否则我就忘了。', pinyin: 'Xìngkuī nǐ tíxǐng wǒ, fǒuzé wǒ jiù wàng le.', english: 'Luckily you reminded me, otherwise I would have forgotten.' },
-                    { chinese: '幸亏下雨了，天气才凉快。', pinyin: 'Xìngkuī xià yǔ le, tiānqì cái liángkuai.', english: 'Fortunately it rained, so the weather became cool.' }
+                { id: 'hsk4-xingkui', pattern: '幸亏', explanation: '[คำอธิบายภาษาไทย: โชคดีที่; โชคยังดีที่ ใช้เพื่อแสดงความขอบคุณสำหรับผลลัพธ์ที่ดี]', examples: [
+                    { chinese: '幸亏你提醒我，否则我就忘了。', pinyin: 'Xìngkuī nǐ tíxǐng wǒ, fǒuzé wǒ jiù wàng le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: โชคดีที่คุณเตือนฉัน มิฉะนั้นฉันคงลืมไปแล้ว]' },
+                    { chinese: '幸亏下雨了，天气才凉快。', pinyin: 'Xìngkuī xià yǔ le, tiānqì cái liángkuai.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: โชคดีที่ฝนตก อากาศถึงได้เย็นสบาย]' }
                 ]},
-                { id: 'hsk4-bijing', pattern: '毕竟', explanation: 'After all; in the final analysis. Used to emphasize a point or to state the true situation.', examples: [
-                    { chinese: '他毕竟是孩子，你应该原谅他。', pinyin: 'Tā bìjìng shì háizi, nǐ yīnggāi yuánliàng tā.', english: 'He is a child after all, you should forgive him.' },
-                    { chinese: '这件事毕竟是他的错。', pinyin: 'Zhè jiàn shì bìjìng shì tā de cuò.', english: 'This matter is his fault after all.' }
+                { id: 'hsk4-bijing', pattern: '毕竟', explanation: '[คำอธิบายภาษาไทย: ท้ายที่สุด; โดยสรุป ใช้เพื่อเน้นประเด็นหรือระบุสถานการณ์ที่แท้จริง]', examples: [
+                    { chinese: '他毕竟是孩子，你应该原谅他。', pinyin: 'Tā bìjìng shì háizi, nǐ yīnggāi yuánliàng tā.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ท้ายที่สุดเขาก็เป็นเด็ก คุณควรให้อภัยเขา]' },
+                    { chinese: '这件事毕竟是他的错。', pinyin: 'Zhè jiàn shì bìjìng shì tā de cuò.', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: ท้ายที่สุดเรื่องนี้ก็เป็นความผิดของเขา]' }
                 ]},
-                { id: 'hsk4-fanzheng', pattern: '反正', explanation: 'Anyway; in any case. Used to indicate that a situation will not change regardless of other factors, or to state a strong opinion.', examples: [
-                    { chinese: '反正我也没事，就陪你去吧。', pinyin: 'Fǎnzhèng wǒ yě méi shì, jiù péi nǐ qù ba.', english: 'Anyway, I have nothing to do, so I\'ll go with you.' },
-                    { chinese: '反正他不会同意的。', pinyin: 'Fǎnzhèng tā bù huì tóngyì de.', english: 'He won\'t agree anyway.' }
+                { id: 'hsk4-fanzheng', pattern: '反正', explanation: '[คำอธิบายภาษาไทย: อย่างไรก็ตาม; ไม่ว่าอย่างไรก็ตาม ใช้เพื่อบ่งบอกว่าสถานการณ์จะไม่เปลี่ยนแปลงไม่ว่าจะเกิดอะไรขึ้น หรือเพื่อแสดงความคิดเห็นที่แข็งกร้าว]', examples: [
+                    { chinese: '反正我也没事，就陪你去吧。', pinyin: 'Fǎnzhèng wǒ yě méi shì, jiù péi nǐ qù ba.', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: อย่างไรก็ตามฉันก็ไม่มีอะไรทำ ไปเป็นเพื่อนคุณก็ได้]' },
+                    { chinese: '反正他不会同意的。', pinyin: 'Fǎnzhèng tā bù huì tóngyì de.', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: อย่างไรก็ตามเขาก็ไม่เห็นด้วยหรอก]' }
                 ]},
-                { id: 'hsk4-jianzhi', pattern: '简直', explanation: 'Simply; at all. Used for emphasis, often indicating exaggeration or strong feeling.', examples: [
-                    { chinese: '这简直是浪费时间。', pinyin: 'Zhè jiǎnzhí shì làngfèi shíjiān.', english: 'This is simply a waste of time.' },
-                    { chinese: '他简直不敢相信。', pinyin: 'Tā jiǎnzhí bù gǎn xiāngxìn.', english: 'He simply couldn\'t believe it.' }
+                { id: 'hsk4-jianzhi', pattern: '简直', explanation: '[คำอธิบายภาษาไทย: อย่างยิ่ง; แทบจะ ใช้เพื่อเน้นย้ำ มักบ่งบอกการพูดเกินจริงหรือความรู้สึกที่รุนแรง]', examples: [
+                    { chinese: '这简直是浪费时间。', pinyin: 'Zhè jiǎnzhí shì làngfèi shíjiān.', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: นี่เป็นการเสียเวลาโดยสิ้นเชิง]' },
+                    { chinese: '他简直不敢相信。', pinyin: 'Tā jiǎnzhí bù gǎn xiāngxìn.', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: เขาแทบไม่เชื่อเลย]' }
                 ]},
-                { id: 'hsk4-wangwang', pattern: '往往', explanation: 'Often; frequently (usually refers to a general tendency or regular occurrence).', examples: [
-                    { chinese: '他周末往往在家看书。', pinyin: 'Tā zhōumò wǎngwǎng zài jiā kàn shū.', english: 'He often reads books at home on weekends.' },
-                    { chinese: '下雨天，路上往往很堵。', pinyin: 'Xià yǔ tiān, lùshàng wǎngwǎng hěn dǔ.', english: 'On rainy days, the road is often very congested.' }
+                { id: 'hsk4-wangwang', pattern: '往往', explanation: '[คำอธิบายภาษาไทย: บ่อยครั้ง; โดยปกติ (มักหมายถึงแนวโน้มทั่วไปหรือเหตุการณ์ที่เกิดขึ้นเป็นประจำ)]', examples: [
+                    { chinese: '他周末往往在家看书。', pinyin: 'Tā zhōumò wǎngwǎng zài jiā kàn shū.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: วันหยุดสุดสัปดาห์เขามักจะอ่านหนังสืออยู่ที่บ้าน]' },
+                    { chinese: '下雨天，路上往往很堵。', pinyin: 'Xià yǔ tiān, lùshàng wǎngwǎng hěn dǔ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: วันที่ฝนตก ถนนมักจะติดมาก]' }
                 ]},
-                { id: 'hsk4-zhujian', pattern: '逐渐', explanation: 'Gradually; little by little. Indicates a slow and continuous change.', examples: [
-                    { chinese: '天气逐渐变冷了。', pinyin: 'Tiānqì zhújiàn biàn lěng le.', english: 'The weather gradually became cold.' },
-                    { chinese: '他的汉语水平逐渐提高了。', pinyin: 'Tā de Hànyǔ shuǐpíng zhújiàn tígāo le.', english: 'His Chinese level gradually improved.' }
+                { id: 'hsk4-zhujian', pattern: '逐渐', explanation: '[คำอธิบายภาษาไทย: ค่อยๆ; ทีละน้อย บ่งบอกการเปลี่ยนแปลงที่ช้าและต่อเนื่อง]', examples: [
+                    { chinese: '天气逐渐变冷了。', pinyin: 'Tiānqì zhújiàn biàn lěng le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: อากาศค่อยๆ หนาวขึ้น]' },
+                    { chinese: '他的汉语水平逐渐提高了。', pinyin: 'Tā de Hànyǔ shuǐpíng zhújiàn tígāo le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ระดับภาษาจีนของเขาค่อยๆ ดีขึ้น]' }
                 ]},
-                { id: 'hsk4-buduan', pattern: '不断', explanation: 'Continuously; incessantly. Emphasizes an action or state that does not stop.', examples: [
-                    { chinese: '他不断地学习新知识。', pinyin: 'Tā bùduàn de xuéxí xīn zhīshi.', english: 'He continuously learns new knowledge.' },
-                    { chinese: '雨下得不断。', pinyin: 'Yǔ xià de bùduàn.', english: 'The rain fell continuously.' }
+                { id: 'hsk4-buduan', pattern: '不断', explanation: '[คำอธิบายภาษาไทย: อย่างต่อเนื่อง; ไม่หยุดหย่อน เน้นการกระทำหรือสถานะที่ไม่หยุดนิ่ง]', examples: [
+                    { chinese: '他不断地学习新知识。', pinyin: 'Tā bùduàn de xuéxí xīn zhīshi.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาเรียนรู้ความรู้ใหม่อย่างต่อเนื่อง]' },
+                    { chinese: '雨下得不断。', pinyin: 'Yǔ xià de bùduàn.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฝนตกไม่หยุด]' }
                 ]},
-                { id: 'hsk4-qinzi', pattern: '亲自', explanation: 'Personally; in person. Emphasizes that the action is done by the person themselves, not through an intermediary.', examples: [
-                    { chinese: '他亲自给我打电话。', pinyin: 'Tā qīnzì gěi wǒ dǎ diànhuà.', english: 'He personally called me.' },
-                    { chinese: '老板亲自接待了我们。', pinyin: 'Lǎobǎn qīnzì jiēdài le wǒmen.', english: 'The boss personally received us.' }
+                { id: 'hsk4-qinzi', pattern: '亲自', explanation: '[คำอธิบายภาษาไทย: ด้วยตนเอง; ด้วยตัวเอง เน้นว่าการกระทำนั้นทำโดยบุคคลนั้นๆ เอง ไม่ใช่ผ่านคนกลาง]', examples: [
+                    { chinese: '他亲自给我打电话。', pinyin: 'Tā qīnzì gěi wǒ dǎ diànhuà.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาโทรหาฉันด้วยตัวเอง]' },
+                    { chinese: '老板亲自接待了我们。', pinyin: 'Lǎobǎn qīnzì jiēdài le wǒmen.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เจ้านายต้อนรับพวกเราด้วยตัวเอง]' }
                 ]},
-                { id: 'hsk4-huxiang', pattern: '互相', explanation: 'Each other; mutually. Indicates a reciprocal action.', examples: [
-                    { chinese: '他们互相帮助。', pinyin: 'Tāmen hùxiāng bāngzhù.', english: 'They help each other.' },
-                    { chinese: '我们应该互相理解。', pinyin: 'Wǒmen yīnggāi hùxiāng lǐjiě.', english: 'We should understand each other.' }
+                { id: 'hsk4-huxiang', pattern: '互相', explanation: '[คำอธิบายภาษาไทย: ซึ่งกันและกัน; ร่วมกัน บ่งบอกการกระทำที่ตอบโต้กัน]', examples: [
+                    { chinese: '他们互相帮助。', pinyin: 'Tāmen hùxiāng bāngzhù.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: พวกเขาช่วยเหลือซึ่งกันและกัน]' },
+                    { chinese: '我们应该互相理解。', pinyin: 'Wǒmen yīnggāi hùxiāng lǐjiě.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: พวกเราควรเข้าใจซึ่งกันและกัน]' }
                 ]},
-                { id: 'hsk4-gezi', pattern: '各自', explanation: 'Respectively; each. Refers to individuals or groups doing something separately or on their own.', examples: [
-                    { chinese: '他们各自回家了。', pinyin: 'Tāmen gèzì huí jiā le.', english: 'They each went home.' },
-                    { chinese: '大家各自发表了意见。', pinyin: 'Dàjiā gèzì fābiǎo le yìjiàn.', english: 'Everyone expressed their opinions respectively.' }
+                { id: 'hsk4-gezi', pattern: '各自', explanation: '[คำอธิบายภาษาไทย: ตามลำดับ; แต่ละคน หมายถึงบุคคลหรือกลุ่มที่ทำบางสิ่งแยกกันหรือด้วยตนเอง]', examples: [
+                    { chinese: '他们各自回家了。', pinyin: 'Tāmen gèzì huí jiā le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: พวกเขาแต่ละคนกลับบ้านไปแล้ว]' },
+                    { chinese: '大家各自发表了意见。', pinyin: 'Dàjiā gèzì fābiǎo le yìjiàn.', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: ทุกคนแสดงความคิดเห็นของตนเองตามลำดับ]' }
                 ]},
-                { id: 'hsk4-youqi', pattern: '尤其', explanation: 'Especially; particularly. Used to highlight a specific item or aspect.', examples: [
-                    { chinese: '我喜欢吃水果，尤其是苹果。', pinyin: 'Wǒ xǐhuān chī shuǐguǒ, yóuqí shì píngguǒ.', english: 'I like eating fruit, especially apples.' },
-                    { chinese: '他很聪明，尤其是在数学方面。', pinyin: 'Tā hěn cōngmíng, yóuqí shì zài shùxué fāngmiàn.', english: 'He is very smart, especially in mathematics.' }
+                { id: 'hsk4-youqi', pattern: '尤其', explanation: '[คำอธิบายภาษาไทย: โดยเฉพาะอย่างยิ่ง; โดยเฉพาะ ใช้เพื่อเน้นรายการหรือแง่มุมเฉพาะ]', examples: [
+                    { chinese: '我喜欢吃水果，尤其是苹果。', pinyin: 'Wǒ xǐhuān chī shuǐguǒ, yóuqí shì píngguǒ.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ฉันชอบกินผลไม้ โดยเฉพาะแอปเปิ้ล]' },
+                    { chinese: '他很聪明，尤其是在数学方面。', pinyin: 'Tā hěn cōngmíng, yóuqí shì zài shùxué fāngmiàn.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: เขาฉลาดมาก โดยเฉพาะอย่างยิ่งในด้านคณิตศาสตร์]' }
                 ]},
-                { id: 'hsk4-zongsuan', pattern: '总算', explanation: 'At long last; finally. Indicates that something desired or expected has finally happened after a long wait or effort.', examples: [
-                    { chinese: '他总算来了。', pinyin: 'Tā zǒngsuàn lái le.', english: 'He finally came.' },
-                    { chinese: '我们总算完成了这个任务。', pinyin: 'Wǒmen zǒngsuàn wánchéng le zhège rènwu.', english: 'We finally completed this task.' }
+                { id: 'hsk4-zongsuan', pattern: '总算', explanation: '[คำอธิบายภาษาไทย: ในที่สุด; ในที่สุดก็ บ่งบอกว่าสิ่งที่ต้องการหรือคาดหวังได้เกิดขึ้นในที่สุดหลังจากรอคอยหรือพยายามมานาน]', examples: [
+                    { chinese: '他总算来了。', pinyin: 'Tā zǒngsuàn lái le.', english: '[คำแปลภาษาไทยของประโยคตัวอย่าง: ในที่สุดเขาก็มาแล้ว]' },
+                    { chinese: '我们总算完成了这个任务。', pinyin: 'Wǒmen zǒngsuàn wánchéng le zhège rènwu.', english: '[คำแปลภาษาไทยของประประโยคตัวอย่าง: ในที่สุดเราก็ทำงานนี้เสร็จแล้ว]' }
                 ]},
             ]
         };
-
-        const { useState, useEffect, useCallback } = React;
-        const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, setDoc, getDoc } = window.firebase;
 
         function App() {
             const [currentLevel, setCurrentLevel] = useState('hsk1');
@@ -406,120 +378,24 @@
             const [showExamples, setShowExamples] = useState(true);
             const [llmOutput, setLlmOutput] = useState('');
             const [isLoadingLlm, setIsLoadingLlm] = useState(false);
-            const [db, setDb] = useState(null);
-            const [auth, setAuth] = useState(null);
-            const [userId, setUserId] = useState(null);
-            const [isAuthReady, setIsAuthReady] = useState(false);
-            const [masteredGrammar, setMasteredGrammar] = useState({});
-            const [showMasteredOnly, setShowMasteredOnly] = useState(false);
 
-            // Initialize Firebase and authenticate
-            useEffect(() => {
-                if (firebaseConfig) {
-                    try {
-                        const app = initializeApp(firebaseConfig);
-                        const firestore = getFirestore(app);
-                        const firebaseAuth = getAuth(app);
-                        setDb(firestore);
-                        setAuth(firebaseAuth);
-
-                        const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
-                            if (user) {
-                                setUserId(user.uid);
-                                console.log("Firebase authenticated. User ID:", user.uid);
-                            } else {
-                                try {
-                                    if (initialAuthToken) {
-                                        await signInWithCustomToken(firebaseAuth, initialAuthToken);
-                                        setUserId(firebaseAuth.currentUser.uid);
-                                        console.log("Signed in with custom token.");
-                                    } else {
-                                        await signInAnonymously(firebaseAuth);
-                                        setUserId(firebaseAuth.currentUser.uid);
-                                        console.log("Signed in anonymously.");
-                                    }
-                                } catch (error) {
-                                    console.error("Firebase authentication failed:", error);
-                                    setUserId(crypto.randomUUID());
-                                }
-                            }
-                            setIsAuthReady(true);
-                        });
-
-                        return () => unsubscribe();
-                    } catch (error) {
-                        console.error("Error initializing Firebase:", error);
-                        setUserId(crypto.randomUUID());
-                        setIsAuthReady(true);
-                    }
-                } else {
-                    console.warn("Firebase config not found. Running without persistence.");
-                    setUserId(crypto.randomUUID());
-                    setIsAuthReady(true);
-                }
-            }, []);
-
-            // Load user progress when auth is ready and userId is available
-            useEffect(() => {
-                const loadProgress = async () => {
-                    if (isAuthReady && db && userId) {
-                        try {
-                            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/grammar_progress`, 'mastery_status');
-                            const docSnap = await getDoc(userDocRef);
-                            if (docSnap.exists()) {
-                                setMasteredGrammar(docSnap.data().status || {});
-                                console.log("Loaded mastery status:", docSnap.data().status);
-                            } else {
-                                console.log("No mastery status found for user. Starting fresh.");
-                                setMasteredGrammar({});
-                            }
-                        } catch (error) {
-                            console.error("Error loading mastery status:", error);
-                        }
-                    }
-                };
-                loadProgress();
-            }, [isAuthReady, db, userId]);
-
-            // Save user progress
-            const saveProgress = useCallback(async (updatedMastery) => {
-                if (db && userId) {
-                    try {
-                        const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/grammar_progress`, 'mastery_status');
-                        await setDoc(userDocRef, { status: updatedMastery }, { merge: true });
-                        console.log("Mastery status saved.");
-                    } catch (error) {
-                        console.error("Error saving mastery status:", error);
-                    }
-                }
-            }, [db, userId]);
-
-            // Filter and set the current deck based on level and mastery filter
+            // Filter and set the current deck based on level
             const updateCurrentDeck = useCallback(() => {
                 const levelData = grammarData[currentLevel] || [];
-                let filteredDeck = levelData;
-
-                if (showMasteredOnly) {
-                    filteredDeck = levelData.filter(grammar => masteredGrammar[grammar.id]);
-                }
-
                 // Shuffle the filtered deck
-                for (let i = filteredDeck.length - 1; i > 0; i--) {
+                for (let i = levelData.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [filteredDeck[i], filteredDeck[j]] = [filteredDeck[j], filteredDeck[i]];
+                    [levelData[i], levelData[j]] = [levelData[j], levelData[i]];
                 }
-
-                setCurrentDeck(filteredDeck);
+                setCurrentDeck(levelData);
                 setCurrentIndex(0); // Reset index when deck changes
                 setLlmOutput(''); // Clear LLM output
-            }, [currentLevel, showMasteredOnly, masteredGrammar]);
+            }, [currentLevel]);
 
-            // Effect to update deck when level or mastery filter changes
+            // Effect to update deck when level changes
             useEffect(() => {
-                if (isAuthReady) {
-                    updateCurrentDeck();
-                }
-            }, [currentLevel, isAuthReady, updateCurrentDeck]);
+                updateCurrentDeck();
+            }, [currentLevel, updateCurrentDeck]);
 
             // Render the current grammar card
             const renderCard = useCallback(() => {
@@ -527,13 +403,11 @@
                     return (
                         <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
                             <p className="text-xl">No grammar points in this selection.</p>
-                            {showMasteredOnly && <p className="text-md mt-2">Try unchecking "Show Mastered Only" or mark some cards as mastered.</p>}
                         </div>
                     );
                 }
 
                 const grammar = currentDeck[currentIndex];
-                const isMastered = masteredGrammar[grammar.id];
 
                 return (
                     <div className="relative w-full h-full flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
@@ -561,27 +435,9 @@
                                 ))}
                             </div>
                         )}
-
-                        <button
-                            onClick={() => toggleMastery(grammar.id)}
-                            className={`absolute bottom-4 right-4 py-1 px-3 rounded-full text-sm font-semibold transition-colors duration-200 ${
-                                isMastered ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-green-100'
-                            }`}
-                        >
-                            {isMastered ? 'Mastered ✅' : 'Mark as Mastered'}
-                        </button>
                     </div>
                 );
-            }, [currentDeck, currentIndex, showExplanation, showExamples, masteredGrammar]);
-
-            // Toggle mastery status and save to Firebase
-            const toggleMastery = useCallback((grammarId) => {
-                setMasteredGrammar(prevStatus => {
-                    const updatedStatus = { ...prevStatus, [grammarId]: !prevStatus[grammarId] };
-                    saveProgress(updatedStatus);
-                    return updatedStatus;
-                });
-            }, [saveProgress]);
+            }, [currentDeck, currentIndex, showExplanation, showExamples]);
 
             // Navigation functions
             const nextCard = () => {
@@ -606,13 +462,15 @@
                 setIsLoadingLlm(true);
                 setLlmOutput('Loading more examples...');
                 const currentGrammar = currentDeck[currentIndex];
+                // Note: The prompt is still in English for the LLM to understand and generate.
+                // The output will then be displayed as raw text.
                 const prompt = `Provide 2-3 more example sentences in Chinese using the grammar pattern '${currentGrammar.pattern}' (meaning: '${currentGrammar.explanation}'). For each example, include its Pinyin and English translation. Format each example on a new line as: 'Chinese Sentence\nPinyin\nEnglish Translation'.`;
 
                 try {
                     let chatHistory = [];
                     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                     const payload = { contents: chatHistory };
-                    const apiKey = "AIzaSyBKY_nSMwqW-lJr9jpPpDF6Czcuji6MnLc"; // API key is handled by the environment
+                    const apiKey = "AIzaSyBKY_nSMwqW-lJr9jpPpDF6Czcuji6MnLc"; // Injected API key
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                     const response = await fetch(apiUrl, {
@@ -651,23 +509,18 @@
                 return () => document.removeEventListener('keydown', handleKeyDown);
             }, [nextCard, prevCard]);
 
-            // Display loading message while Firebase auth is not ready
-            if (!isAuthReady) {
-                return (
-                    <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-700">
-                        Loading application...
-                    </div>
-                );
-            }
-
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center p-4 font-sans text-gray-800 w-full">
-                    <h1 className="text-4xl font-extrabold text-indigo-800 mb-6 text-center">
-                        Chinese Grammar Flashcards
-                    </h1>
+                    <div className="w-full max-w-2xl flex justify-between items-center mb-6">
+                        <h1 className="text-3xl font-extrabold text-indigo-800 text-center flex-grow">
+                            Chinese Grammar Flashcards
+                        </h1>
+                        <a href="index.html" className="ml-4 py-2 px-4 bg-white text-indigo-700 font-semibold rounded-lg shadow-sm border border-indigo-300 hover:bg-indigo-50 hover:border-indigo-400 transition-colors duration-200">
+                            Go to Home
+                        </a>
+                    </div>
 
                     <div className="flex flex-wrap justify-center gap-2 mb-6">
-                        <a href="./index.html"><button class="hsk-nav-btn">HSK Vocab</button></a>
                         {['hsk1', 'hsk2', 'hsk3', 'hsk4'].map(level => (
                             <button
                                 key={level}
@@ -687,16 +540,6 @@
                         >
                             Shuffle Deck
                         </button>
-                        <div className="w-full sm:w-auto flex items-center justify-center gap-2">
-                            <label htmlFor="mastered-toggle" className="text-gray-700 text-sm font-medium">Show Mastered Only:</label>
-                            <input
-                                type="checkbox"
-                                id="mastered-toggle"
-                                checked={showMasteredOnly}
-                                onChange={() => setShowMasteredOnly(!showMasteredOnly)}
-                                className="form-checkbox h-5 w-5 text-indigo-600 rounded-md border-gray-300 focus:ring-indigo-500"
-                            />
-                        </div>
                     </div>
 
                     <div className="w-full max-w-2xl h-[450px] md:h-[500px] mb-6">
@@ -754,12 +597,6 @@
                             Next
                         </button>
                     </div>
-
-                    {userId && (
-                        <div className="mt-6 text-xs text-gray-500 text-center">
-                            Your User ID: {userId} (for progress tracking)
-                        </div>
-                    )}
                 </div>
             );
         }
