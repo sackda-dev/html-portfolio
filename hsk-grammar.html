@@ -464,7 +464,7 @@
                 const currentGrammar = currentDeck[currentIndex];
                 // Note: The prompt is still in English for the LLM to understand and generate.
                 // The output will then be displayed as raw text.
-                const prompt = `Provide 2-3 more example sentences in Chinese using the grammar pattern '${currentGrammar.pattern}' (meaning: '${currentGrammar.explanation}'). For each example, include its Pinyin and Thai translation. Format each example on a new line as: 'Chinese Sentence\nPinyin\nThai Translation\nEnglish structure of tense'.`;
+                const prompt = `Provide 2-3 more example sentences in Chinese using the grammar pattern '${currentGrammar.pattern}' (meaning: '${currentGrammar.explanation}'). For each example, include its Pinyin and Thailand translation. Format each example on a new line as: 'Chinese Sentence\nSentense pattern\nPinyin\nThailand Translation'.`;
 
                 try {
                     let chatHistory = [];
@@ -606,4 +606,5 @@
     </script>
 </body>
 </html>
+
 
